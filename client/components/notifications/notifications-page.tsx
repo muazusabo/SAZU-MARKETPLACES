@@ -41,7 +41,7 @@ function Content() {
       <p className="mt-1 text-muted-foreground" aria-live="polite">{unread > 0 ? `${unread} unread` : 'You’re all caught up.'}</p>
       <div className="mt-6">
         {q.isLoading ? <div role="status" aria-label="Loading notifications" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-          : q.isError ? <ErrorState message="We couldn’t load your notifications." />
+          : q.isError ? <ErrorState message="We couldn’t load your notifications." error={q.error} onRetry={() => { void q.refetch(); }} />
           : !q.data?.data.length ? <EmptyState title="No notifications yet" text="New messages and decisions about your seller account and listings will show up here." />
           : (
             <>

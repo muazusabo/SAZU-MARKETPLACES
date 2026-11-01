@@ -19,7 +19,7 @@ function Content() {
       <p className="mt-1 text-muted-foreground">Private conversations with buyers and sellers about listings.</p>
       <div className="mt-6">
         {q.isLoading ? <div role="status" aria-label="Loading conversations" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}</div>
-          : q.isError ? <ErrorState message="We couldn’t load your messages." />
+          : q.isError ? <ErrorState message="We couldn’t load your messages." error={q.error} onRetry={() => { void q.refetch(); }} />
           : !q.data?.data.length ? <EmptyState title="No conversations yet" text="Open a listing and tap “Chat with Seller” to start one. Sellers see messages from interested buyers here." action={{ href: '/browse', label: 'Browse products' }} />
           : (
             <ul className="grid gap-3">

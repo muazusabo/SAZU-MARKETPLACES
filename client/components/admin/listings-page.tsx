@@ -42,7 +42,7 @@ function Content() {
       </div>
       <div className="mt-4">
         {list.isLoading ? <div role="status" aria-label="Loading" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}</div>
-          : list.isError ? <ErrorState message="We couldn’t load listings." />
+          : list.isError ? <ErrorState message="We couldn’t load listings." error={list.error} onRetry={() => { void list.refetch(); }} />
           : !list.data?.data.length ? <EmptyState title="Nothing here" text={tab === 'pending_review' ? 'No listings are waiting for review.' : 'No listings match.'} />
           : (
             <>
@@ -80,7 +80,7 @@ function Detail({ id }: { id: string }) {
     await Promise.all([qc.invalidateQueries({ queryKey: ['admin-listing', id] }), qc.invalidateQueries({ queryKey: ['admin-listings'] }), qc.invalidateQueries({ queryKey: ['admin-overview'] })]);
   };
   if (q.isLoading) return <div role="status" aria-label="Loading"><Skeleton className="h-96" /></div>;
-  if (q.isError || !q.data) return <ErrorState message="We couldn’t find that listing." />;
+  if (q.isError || !q.data) return <ErrorState message="We couldn’t load this listing." error={q.error} onRetry={() => { void q.refetch(); }} />;
   const l = q.data;
   return (
     <div>

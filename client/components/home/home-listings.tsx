@@ -18,7 +18,8 @@ const SECTIONS = [
 export async function HomeListings() {
   const results = await Promise.allSettled(SECTIONS.map((s) => fetchProducts(`${s.query}&pageSize=4`)));
   if (results.every((r) => r.status === 'rejected')) {
-    return <div className="container mt-16"><ErrorState message="We couldn’t load listings right now." /></div>;
+    const failure = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+    return <div className="container mt-16"><ErrorState message="We couldn’t load listings right now." error={failure?.reason} /></div>;
   }
   const lists: ProductCardData[][] = results.map((r) => (r.status === 'fulfilled' ? r.value.items : []));
   if (lists.every((l) => l.length === 0)) {

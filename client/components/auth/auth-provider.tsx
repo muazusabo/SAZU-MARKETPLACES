@@ -47,6 +47,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { void reload(); }, [reload]);
 
+  useEffect(() => {
+    const handleExpired = () => {
+      setAccessToken(null);
+      setState({ status: 'anonymous', user: null });
+    };
+    window.addEventListener('sazu:session-expired', handleExpired);
+    return () => window.removeEventListener('sazu:session-expired', handleExpired);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,

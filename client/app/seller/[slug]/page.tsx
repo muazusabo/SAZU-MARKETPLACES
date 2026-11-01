@@ -22,9 +22,11 @@ export default async function SellerPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const page = Math.max(1, Math.min(1000, Number.parseInt((await searchParams).page ?? '1', 10) || 1));
   let s;
-  try { s = await fetchStorefront(slug); } catch { return <div className="container py-16"><ErrorState message="We couldn’t load this storefront." /></div>; }
+  try { s = await fetchStorefront(slug); } catch (error) { return <div className="container py-16"><ErrorState message="We couldn’t load this storefront." error={error} /></div>; }
   if (!s) notFound();
-  const list = await fetchProducts(`seller=${s.slug}&page=${page}&pageSize=12`).catch(() => null);
+  let list: Awaited<ReturnType<typeof fetchProducts>> | null = null;
+  let listError: unknown;
+  try { list = await fetchProducts(`seller=${s.slug}&page=${page}&pageSize=12`); } catch (error) { listError = error; }
 
   return (
     <div className="container py-8">
@@ -51,7 +53,7 @@ export default async function SellerPage({ params, searchParams }: Props) {
       </header>
 
       <section aria-label="Listings" className="mt-8">
-        {!list ? <ErrorState /> : list.items.length === 0
+        {!list ? <ErrorState error={listError} /> : list.items.length === 0
           ? <EmptyState title="No active listings" text="This seller has nothing listed right now. Check back soon." action={{ href: '/browse', label: 'Browse all products' }} />
           : <><ProductGrid products={list.items} headingLevel={2} /><Pagination page={list.meta.page} totalPages={list.meta.totalPages} hrefFor={(n) => `/seller/${s.slug}?page=${n}`} /></>}
       </section>

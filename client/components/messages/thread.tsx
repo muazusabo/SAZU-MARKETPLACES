@@ -90,7 +90,7 @@ function Content({ id }: { id: string }) {
   if (conv.isError || !conv.data) {
     return (
       <div className="container max-w-3xl py-8">
-        <ErrorState message={conv.error instanceof ApiError && conv.error.status === 404 ? 'This conversation doesn’t exist or you’re not part of it.' : 'We couldn’t load this conversation.'} />
+        <ErrorState message={conv.error instanceof ApiError && conv.error.status === 404 ? 'This conversation doesn’t exist or you’re not part of it.' : 'We couldn’t load this conversation.'} error={conv.error} onRetry={() => { void conv.refetch(); }} />
         <Button asChild variant="outline" className="mt-4"><Link href="/messages">Back to messages</Link></Button>
       </div>
     );
@@ -129,7 +129,7 @@ function Content({ id }: { id: string }) {
         className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border bg-muted/40 p-3">
         {nextBefore && <div className="mb-3 text-center"><Button type="button" size="sm" variant="outline" disabled={loadingOlder} onClick={loadEarlier}>{loadingOlder ? 'Loading…' : 'Load earlier messages'}</Button></div>}
         {latest.isLoading ? <Skeleton className="h-16 w-2/3" />
-          : latest.isError && !messages.length ? <ErrorState message="We couldn’t load messages." />
+          : latest.isError && !messages.length ? <ErrorState message="We couldn’t load messages." error={latest.error} onRetry={() => { void latest.refetch(); }} />
           : messages.length === 0 ? <p className="py-10 text-center text-muted-foreground">No messages yet. Say hello and ask about the item.</p>
           : (
             <ol aria-live="polite" aria-label="Messages" className="grid gap-2">

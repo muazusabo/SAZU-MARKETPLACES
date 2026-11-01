@@ -105,7 +105,7 @@ function Content() {
         <Button type="submit">Create</Button>
       </form>
       <div className="mt-5">
-        {q.isLoading ? <Skeleton className="h-48" /> : q.isError ? <ErrorState message="We couldn’t load categories." /> : !q.data?.length ? <EmptyState title="No categories" text="Create the first one above." /> : (
+        {q.isLoading ? <Skeleton className="h-48" /> : q.isError ? <ErrorState message="We couldn’t load categories." error={q.error} onRetry={() => { void q.refetch(); }} /> : !q.data?.length ? <EmptyState title="No categories" text="Create the first one above." /> : (
           <ul className="grid gap-2">
             {q.data.map((c) => (
               <li key={c.id} className={`rounded-lg border bg-card ${c.parentSlug ? 'ml-6' : ''}`}>

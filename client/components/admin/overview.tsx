@@ -42,7 +42,7 @@ function Content() {
           </p>
         </div>
       </header>
-      {q.isError ? <div className="mt-6"><ErrorState message="We couldn’t load the overview." /></div> : (
+      {q.isError ? <div className="mt-6"><ErrorState message="We couldn’t load the overview." error={q.error} onRetry={() => { void q.refetch(); }} /></div> : (
         <>
           <section aria-labelledby="metrics-h">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-2">

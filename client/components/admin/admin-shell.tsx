@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Activity, ClipboardList, Flag, LayoutDashboard, Settings2, ShieldCheck, Tags, Users } from 'lucide-react';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/auth/auth-provider';
-import { Button } from '@/components/ui/button';
+import { PermissionDenied } from '@/components/marketplace/states';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -33,10 +33,8 @@ function Inner({ children, adminOnly }: { children: React.ReactNode; adminOnly: 
   const isMod = isAdmin || !!user?.roles.includes('moderator');
   if (!isMod || (adminOnly && !isAdmin)) {
     return (
-      <div className="container max-w-xl py-16" role="alert">
-        <h1 className="text-2xl font-bold">You don’t have access to this page</h1>
-        <p className="mt-2 text-muted-foreground">{isMod ? 'This area is for administrators only.' : 'The admin area is for marketplace moderators and administrators.'}</p>
-        <Button asChild className="mt-4"><Link href="/">Back to home</Link></Button>
+      <div className="container max-w-2xl py-16">
+        <PermissionDenied message={isMod ? 'This area is available to administrators only. Your current role cannot open it.' : 'This area is available to marketplace moderators and administrators. If you believe you should have access, contact support.'} />
       </div>
     );
   }

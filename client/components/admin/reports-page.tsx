@@ -44,7 +44,7 @@ function Content() {
       </div>
       <div className="mt-4">
         {q.isLoading ? <div role="status" aria-label="Loading" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-          : q.isError ? <ErrorState message="We couldn’t load reports." />
+          : q.isError ? <ErrorState message="We couldn’t load reports." error={q.error} onRetry={() => { void q.refetch(); }} />
           : !q.data?.data.length ? <EmptyState title="No reports" text="Nothing needs attention here." />
           : <><ul className="grid gap-3">{q.data.data.map((r) => (
               <li key={r.id}><Link href={`/admin/reports/${r.id}`} className="block rounded-lg border bg-card p-4 hover:border-primary">
@@ -67,7 +67,7 @@ function Detail({ id }: { id: string }) {
   };
   async function review() { try { await act('reviewing', 'Marked as under review.')(); } catch (e) { toast.error(errMsg(e)); } }
   if (q.isLoading) return <div role="status" aria-label="Loading"><Skeleton className="h-64" /></div>;
-  if (q.isError || !q.data) return <ErrorState message="We couldn’t find that report." />;
+  if (q.isError || !q.data) return <ErrorState message="We couldn’t load this report." error={q.error} onRetry={() => { void q.refetch(); }} />;
   const r = q.data; const link = targetLink(r); const closed = ['resolved', 'dismissed'].includes(r.status);
   return (
     <div className="grid gap-5">

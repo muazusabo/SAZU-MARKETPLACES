@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function ProductPage({ params }: { params: Params }) {
   const { slug } = await params;
   let p;
-  try { p = await fetchProduct(slug); } catch { return <div className="container py-16"><ErrorState message="We couldn’t load this listing." /></div>; }
+  try { p = await fetchProduct(slug); } catch (error) { return <div className="container py-16"><ErrorState message="We couldn’t load this listing." error={error} /></div>; }
   if (!p) notFound();
 
   const [more, recommendations] = await Promise.all([

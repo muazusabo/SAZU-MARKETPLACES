@@ -16,7 +16,7 @@ export function ListingPreview({ id }: { id: string }) {
 function Inner({ id }: { id: string }) {
   const q = useQuery({ queryKey: ['listing', id], queryFn: () => sellerApi.get(id) });
   if (q.isLoading) return <div className="container py-8" role="status" aria-label="Loading preview"><Skeleton className="h-96" /></div>;
-  if (q.isError || !q.data) return <div className="container py-8"><ErrorState message="We couldn’t find that listing." /></div>;
+  if (q.isError || !q.data) return <div className="container py-8"><ErrorState message="We couldn’t load this listing." error={q.error} onRetry={() => { void q.refetch(); }} /></div>;
   const l = q.data;
   return (
     <div className="container py-8">

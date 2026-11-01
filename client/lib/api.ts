@@ -4,6 +4,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public requestId?: string,
+    public kind?: 'network' | 'timeout',
   ) {
     super(message);
     this.name = 'ApiError';
@@ -49,7 +50,13 @@ export async function apiFetch<T>(path: string, init: RequestInit & { timeoutMs?
 async function request<T>(path: string, init: RequestInit & { timeoutMs?: number }, unwrap: boolean): Promise<T> {
   const { timeoutMs = 8000, ...rest } = init;
   const controller = new AbortController();
+  const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let slowTimer: ReturnType<typeof setTimeout> | undefined;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('sazu:request', { detail: { id: requestId, stage: 'start' } }));
+    slowTimer = setTimeout(() => window.dispatchEvent(new CustomEvent('sazu:request', { detail: { id: requestId, stage: 'slow' } })), 1200);
+  }
   try {
     const res = await fetch(`${apiBaseUrl()}${path}`, {
       ...rest,
@@ -64,8 +71,15 @@ async function request<T>(path: string, init: RequestInit & { timeoutMs?: number
     return (unwrap ? unwrapEnvelope(body) : body) as T;
   } catch (err) {
     if (err instanceof ApiError) throw err;
-    throw new ApiError(0, 'Could not reach the SAZU Marketplace server. Check your connection and try again.');
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError(0, 'The request took too long to finish. Check your connection and try again.', undefined, 'timeout');
+    }
+    throw new ApiError(0, 'Could not reach the SAZU Marketplace server. Check your internet connection and try again.', undefined, 'network');
   } finally {
     clearTimeout(timer);
+    if (slowTimer) clearTimeout(slowTimer);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sazu:request', { detail: { id: requestId, stage: 'end' } }));
+    }
   }
 }

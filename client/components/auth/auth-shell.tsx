@@ -12,5 +12,10 @@ export function AuthShell({ title, intro, children }: { title: string; intro?: s
 
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
-  return <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-medium text-destructive">{message}</p>;
+  return (
+    <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+      <p className="font-semibold">{message}</p>
+      <p className="mt-1 text-destructive/80">Check the highlighted fields or your connection, then try again.</p>
+    </div>
+  );
 }

@@ -59,7 +59,7 @@ export function SellerGate({ children, allowUnapproved = false, allowPending = f
 function Inner({ children, allowUnapproved, allowPending }: { children: (seller: SellerMe) => React.ReactNode; allowUnapproved: boolean; allowPending: boolean }) {
   const q = useSellerMe();
   if (q.isLoading) return <div className="container py-12" role="status" aria-label="Loading"><Skeleton className="h-8 w-1/3" /><Skeleton className="mt-6 h-48" /></div>;
-  if (q.isError) return <div className="container py-12"><ErrorState message="We couldn’t load your seller account." /></div>;
+  if (q.isError) return <div className="container py-12"><ErrorState message="We couldn’t load your seller account." error={q.error} onRetry={() => { void q.refetch(); }} /></div>;
   const seller = q.data ?? null;
   if (!seller || (seller.status !== 'approved' && !(allowPending && seller.status === 'pending') && !(allowUnapproved && seller.status !== 'suspended'))) return <StatusPanel seller={seller} />;
   return <>{children(seller)}</>;

@@ -60,7 +60,7 @@ function Content() {
       <p className="mt-1 text-muted-foreground">Only you can see this list.</p>
       <div className="mt-6">
         {q.isLoading ? <div role="status" aria-label="Loading wishlist" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28" />)}</div>
-          : q.isError ? <ErrorState message="We couldn’t load your wishlist." />
+          : q.isError ? <ErrorState message="We couldn’t load your wishlist." error={q.error} onRetry={() => { void q.refetch(); }} />
           : !q.data?.data.length ? <EmptyState title="Nothing saved yet" text="Tap the heart on any listing to keep it here for later." action={{ href: '/browse', label: 'Browse products' }} />
           : (
             <>

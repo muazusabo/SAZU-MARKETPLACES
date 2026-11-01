@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { VerificationLinkRecovery } from '@/components/auth/verification-link-recovery';
 import { RealtimeProvider } from '@/components/realtime/realtime-provider';
 import { WishlistProvider } from '@/components/wishlist/wishlist-provider';
+import { NetworkStatus } from '@/components/ui/network-status';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <RealtimeProvider>
           <WishlistProvider>
             <VisitorTracker />
+            <NetworkStatus />
             {children}
           </WishlistProvider>
         </RealtimeProvider>

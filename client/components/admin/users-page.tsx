@@ -29,7 +29,7 @@ function Content() {
       </form>
       <div className="mt-4">
         {list.isLoading ? <div role="status" aria-label="Loading" className="grid gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>
-          : list.isError ? <ErrorState message="We couldn’t load users." />
+          : list.isError ? <ErrorState message="We couldn’t load users." error={list.error} onRetry={() => { void list.refetch(); }} />
           : !list.data?.data.length ? <EmptyState title="No users found" text="Try a different search or filter." />
           : <><ul className="divide-y rounded-lg border bg-card">{list.data.data.map((u) => (
               <li key={u.id}><Link href={`/admin/users/${u.id}`} className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-secondary">
@@ -48,7 +48,7 @@ function Detail({ id }: { id: string }) {
   const refresh = async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['admin-user', id] }), qc.invalidateQueries({ queryKey: ['admin-users'] }), qc.invalidateQueries({ queryKey: ['admin-overview'] })]); };
   async function run(fn: () => Promise<unknown>, ok: string) { try { await fn(); toast.success(ok); await refresh(); } catch (e) { toast.error(errMsg(e)); } }
   if (q.isLoading) return <div role="status" aria-label="Loading"><Skeleton className="h-64" /></div>;
-  if (q.isError || !q.data) return <ErrorState message="We couldn’t find that user." />;
+  if (q.isError || !q.data) return <ErrorState message="We couldn’t load this user." error={q.error} onRetry={() => { void q.refetch(); }} />;
   const u = q.data; const isAdminUser = u.roles.includes('admin');
   return (
     <div className="grid gap-5">

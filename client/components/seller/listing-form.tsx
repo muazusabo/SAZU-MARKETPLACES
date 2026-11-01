@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Info } from 'lucide-react';
 import { FormError } from '@/components/auth/auth-shell';
+import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
 import { SelectField } from '@/components/ui/select-field';
 import { TextField } from '@/components/ui/text-field';
@@ -17,6 +18,7 @@ import { CONDITION_LABELS } from '@/lib/labels';
 import { ListingValues, koboToNairaString, listingSchema, listingToPayload } from '@/lib/listing-schema';
 import { CategoryNode } from '@/lib/marketplace';
 import { OwnListing, sellerApi } from '@/lib/seller-api';
+import { useBrowserFormDraft } from '@/lib/use-browser-draft';
 import { ImageManager } from './image-manager';
 import { ListingStatusBadge } from './status-badge';
 
@@ -42,6 +44,7 @@ function StatusBanner({ l }: { l: OwnListing }) {
 export function ListingForm({ listing }: { listing?: OwnListing }) {
   const router = useRouter();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'save' | 'submit' | null>(null);
   const locked = !!listing && ['archived', 'removed'].includes(listing.status);
@@ -56,6 +59,7 @@ export function ListingForm({ listing }: { listing?: OwnListing }) {
       attributes: listing?.attributeValues ?? {},
     },
   });
+  const draft = useBrowserFormDraft(`sazu:draft:listing:${user?.id ?? 'unknown'}:${listing?.id ?? 'new'}`, form);
   const { register, handleSubmit, watch, reset, formState: { errors, isDirty } } = form;
   const categorySlug = watch('categorySlug');
   const type = watch('productType');
@@ -75,6 +79,7 @@ export function ListingForm({ listing }: { listing?: OwnListing }) {
     try {
       const saved = await save(v);
       toast.success(listing ? 'Changes saved.' : 'Draft saved. Now add photos.');
+      draft.clearDraft();
       if (!listing) router.replace(`/dashboard/listings/${saved.id}/edit`); else reset(v);
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Could not save. Try again.'); } finally { setBusy(null); }
   });
@@ -86,8 +91,9 @@ export function ListingForm({ listing }: { listing?: OwnListing }) {
       if (isDirty) await save(v);
       await sellerApi.action(listing.id, 'submit');
       await qc.invalidateQueries({ queryKey: ['seller-listings'] }); await qc.invalidateQueries({ queryKey: ['seller-dashboard'] });
+      draft.clearDraft();
       toast.success('Published. Buyers can see it now.');
-      router.push('/dashboard');
+      router.push('/dashboard?published=1');
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Could not submit. Try again.'); } finally { setBusy(null); }
   });
 
@@ -95,6 +101,8 @@ export function ListingForm({ listing }: { listing?: OwnListing }) {
   return (
     <div className="grid gap-8">
       {listing && <StatusBanner l={listing} />}
+      {draft.hasDraft && <p role="status" className="rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">Your in-progress listing is saved on this device and will return if your session expires.</p>}
+      {draft.storageFailed && <p role="alert" className="rounded-md border border-accent/50 bg-secondary px-3 py-2 text-sm">Your browser couldn’t read or save this draft. Use “Save draft” before leaving this page.</p>}
       <form onSubmit={onSave} noValidate className="grid gap-5">
         <fieldset disabled={locked || !!busy} className="grid gap-5">
           <FormError message={error} />

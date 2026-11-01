@@ -18,6 +18,6 @@ export function ListingEditor({ id }: { id?: string }) {
 function Loaded({ id }: { id: string }) {
   const q = useQuery({ queryKey: ['listing', id], queryFn: () => sellerApi.get(id) });
   if (q.isLoading) return <div role="status" aria-label="Loading listing"><Skeleton className="h-10" /><Skeleton className="mt-4 h-64" /></div>;
-  if (q.isError || !q.data) return <ErrorState message="We couldn’t find that listing." />;
+  if (q.isError || !q.data) return <ErrorState message="We couldn’t load this listing." error={q.error} onRetry={() => { void q.refetch(); }} />;
   return <ListingForm key={q.data.id} listing={q.data} />;
 }

@@ -20,8 +20,9 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   if (status !== 'authenticated') {
     return (
       <div className="container max-w-2xl py-12" role="status" aria-label="Checking your session">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="mt-6 h-40" />
+        <p className="sr-only">Checking your session…</p>
+        <Skeleton className="h-8 w-1/3 motion-reduce:animate-none" />
+        <Skeleton className="mt-6 h-40 motion-reduce:animate-none" />
       </div>
     );
   }

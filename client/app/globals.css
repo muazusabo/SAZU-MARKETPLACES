@@ -61,8 +61,13 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
+  @keyframes network-progress {
+    from { transform: translateX(-120%); }
+    to { transform: translateX(340%); }
+  }
   .admin-metric-card { animation: admin-card-enter 450ms both; }
   .admin-orbit { animation: admin-orbit 36s linear infinite; }
+  .network-progress { animation: network-progress 1.6s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   }

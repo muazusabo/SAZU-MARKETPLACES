@@ -19,6 +19,7 @@ import { apiFetch, ApiError } from '@/lib/api';
 import { authedFetch, jsonBody, setAccessToken } from '@/lib/auth-client';
 import { buyerApi } from '@/lib/buyer-api';
 import { formatMessageTime, formatNairaFromKobo } from '@/lib/format';
+import { useBrowserFormDraft } from '@/lib/use-browser-draft';
 import { ProfileValues, normalizeNigerianPhone, profileSchema } from '@/lib/validation';
 import { Me, useAuth } from './auth-provider';
 import { FormError } from './auth-shell';
@@ -27,10 +28,12 @@ import { RequireAuth } from './require-auth';
 function ProfileForm({ user }: { user: Me }) {
   const { setUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting, isDirty } } = useForm<ProfileValues>({
+  const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { fullName: user.profile.fullName, displayName: user.profile.displayName, phone: user.profile.phone ?? '', campusArea: user.profile.campusArea ?? '' },
   });
+  const draft = useBrowserFormDraft(`sazu:draft:profile:${user.id}`, form);
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting, isDirty } } = form;
 
   async function onSubmit(v: ProfileValues) {
     setError(null);
@@ -42,6 +45,7 @@ function ProfileForm({ user }: { user: Me }) {
       }));
       setUser(me);
       reset({ fullName: me.profile.fullName, displayName: me.profile.displayName, phone: me.profile.phone ?? '', campusArea: me.profile.campusArea ?? '' });
+      draft.clearDraft();
       toast.success('Profile saved.');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Could not save your profile.');
@@ -50,6 +54,8 @@ function ProfileForm({ user }: { user: Me }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4">
+      {draft.hasDraft && <p role="status" className="rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">Your in-progress profile changes are saved on this device.</p>}
+      {draft.storageFailed && <p role="alert" className="rounded-md border border-accent/50 bg-secondary px-3 py-2 text-sm">Your browser couldn’t read or save your profile draft. Save your changes before leaving.</p>}
       <FormError message={error} />
       <TextField label="Full name" error={errors.fullName?.message} {...register('fullName')} />
       <TextField label="Display name" hint="Shown to other students." error={errors.displayName?.message} {...register('displayName')} />

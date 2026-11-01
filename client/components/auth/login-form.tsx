@@ -34,6 +34,7 @@ export function LoginForm() {
   return (
     <AuthShell title="Sign in" intro="Use your SAZU Marketplace account to message sellers and manage your listings.">
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4">
+        {next !== '/' && <p role="status" className="rounded-md border bg-secondary/60 p-3 text-sm text-muted-foreground">Sign in to return to your previous page. If you were editing a listing or shop application, your saved draft on this device will be restored.</p>}
         <FormError message={error} />
         <TextField label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
         <TextField label="Password" type="password" autoComplete="current-password" error={errors.password?.message} {...register('password')} />

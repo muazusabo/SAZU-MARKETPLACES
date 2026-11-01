@@ -23,7 +23,7 @@ function Content() {
         <Button type="submit" variant="outline">Filter</Button>
       </form>
       <div className="mt-4">
-        {q.isLoading ? <Skeleton className="h-64" /> : q.isError ? <ErrorState message="We couldn’t load the audit log." /> : !q.data?.data.length ? <EmptyState title="No entries" text="Nothing matches." /> : (
+        {q.isLoading ? <Skeleton className="h-64" /> : q.isError ? <ErrorState message="We couldn’t load the audit log." error={q.error} onRetry={() => { void q.refetch(); }} /> : !q.data?.data.length ? <EmptyState title="No entries" text="Nothing matches." /> : (
           <><ul className="divide-y rounded-lg border bg-card text-sm">{q.data.data.map((a) => (
             <li key={a.id} className="grid gap-1 p-3">
               <p className="flex flex-wrap items-center justify-between gap-2"><span><span className="font-semibold">{a.action}</span> <span className="text-muted-foreground">by {a.actor ?? 'unknown'}</span></span><span className="text-xs text-muted-foreground">{formatMessageTime(a.createdAt)}</span></p>

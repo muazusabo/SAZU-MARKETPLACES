@@ -29,12 +29,25 @@ export async function generateMetadata({ searchParams }: { searchParams: SP }): 
 
 async function Results({ params }: { params: BrowseParams }) {
   let data;
-  try { data = await fetchProducts(toApiQuery(params)); } catch { return <ErrorState />; }
+  try { data = await fetchProducts(toApiQuery(params)); } catch (error) { return <ErrorState error={error} />; }
   const { items, meta } = data;
   if (items.length === 0) {
     return hasActiveFilters(params)
-      ? <EmptyState title="No listings match your search" text="Try different keywords, widen the price range, or clear some filters." action={{ href: '/browse', label: 'Clear all filters' }} />
-      : <EmptyState title="No listings yet" text="Listings from approved student sellers will appear here. Be the first to sell something." action={{ href: '/sell', label: 'Start selling' }} />;
+      ? <EmptyState
+          title={params.q ? `No results for “${params.q}”` : 'No listings match these filters'}
+          text="Try a shorter or different search, remove a filter, or browse the newest listings instead."
+          action={{ href: '/browse', label: 'Clear search and filters' }}
+          suggestions={[
+            { href: '/browse?sort=newest', label: 'See recently listed' },
+            { href: '/categories', label: 'Explore categories' },
+          ]}
+        />
+      : <EmptyState
+          title="No listings yet"
+          text="Student sellers haven’t published any listings yet. Check back soon or be among the first to list."
+          action={{ href: '/sell', label: 'Start selling' }}
+          suggestions={[{ href: '/categories', label: 'Explore categories' }]}
+        />;
   }
   return (
     <>

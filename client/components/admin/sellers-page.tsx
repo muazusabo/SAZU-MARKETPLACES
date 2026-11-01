@@ -58,7 +58,7 @@ function Content() {
       <div className="mt-4"><Tabs label="Filter by status" tabs={TABS} value={tab} onChange={(v) => { setTab(v); setPage(1); }} /></div>
       <div className="mt-4">
         {q.isLoading ? <div role="status" aria-label="Loading" className="grid gap-3">{[0, 1].map((i) => <Skeleton key={i} className="h-32" />)}</div>
-          : q.isError ? <ErrorState message="We couldn’t load seller applications." />
+          : q.isError ? <ErrorState message="We couldn’t load seller applications." error={q.error} onRetry={() => { void q.refetch(); }} />
           : !q.data?.data.length ? <EmptyState title="Nothing here" text={tab === 'pending' ? 'No applications are waiting for review.' : 'No sellers match this filter.'} />
           : <><ul className="grid gap-3">{q.data.data.map((s) => <Row key={s.id} s={s} />)}</ul><Pager meta={q.data.meta} onPage={setPage} /></>}
       </div>

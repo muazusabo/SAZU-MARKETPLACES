@@ -47,7 +47,7 @@ function RowActions({ row }: { row: OwnListingRow }) {
   );
 }
 
-function Content({ shopName }: { shopName: string }) {
+function Content({ shopName, published, applicationSubmitted }: { shopName: string; published: boolean; applicationSubmitted: boolean }) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('all');
   const [page, setPage] = useState(1);
   const stats = useQuery({ queryKey: ['seller-dashboard'], queryFn: sellerApi.dashboard });
@@ -66,7 +66,25 @@ function Content({ shopName }: { shopName: string }) {
         </div>
       </div>
 
-      {stats.isError ? <div className="mt-6"><ErrorState message="We couldn’t load your numbers." /></div> : (
+      {published && (
+        <div role="status" className="mt-5 rounded-xl border border-success/30 bg-success/5 p-5">
+          <h2 className="font-bold text-success">Your listing is live</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Buyers can now find it on SAZU Marketplace. Keep your details and availability up to date, and reply promptly to interested buyers.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild size="sm"><Link href="/browse">Browse the marketplace</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link href="/dashboard/listings/new">Create another listing</Link></Button>
+          </div>
+        </div>
+      )}
+      {applicationSubmitted && (
+        <div role="status" className="mt-5 rounded-xl border border-accent/40 bg-secondary p-5">
+          <h2 className="font-bold">Your seller application has been submitted</h2>
+          <p className="mt-1 text-sm text-muted-foreground">We’ll review your shop details. You can already create and publish listings while your application is under review.</p>
+          <Button asChild size="sm" className="mt-3"><Link href="/dashboard/listings/new">Create a listing</Link></Button>
+        </div>
+      )}
+
+      {stats.isError ? <div className="mt-6"><ErrorState message="We couldn’t load your numbers." error={stats.error} onRetry={() => { void stats.refetch(); }} /></div> : (
         <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
           {cards.map(([label, n]) => (
             <div key={label} className="rounded-lg border bg-card p-4">
@@ -92,7 +110,7 @@ function Content({ shopName }: { shopName: string }) {
         </div>
         <div className="mt-4">
           {list.isLoading ? <div role="status" aria-label="Loading listings" className="grid gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}</div>
-            : list.isError ? <ErrorState message="We couldn’t load your listings." />
+            : list.isError ? <ErrorState message="We couldn’t load your listings." error={list.error} onRetry={() => { void list.refetch(); }} />
             : !list.data?.data.length ? (
               <EmptyState title={tab === 'all' ? 'You haven’t created a listing yet' : 'Nothing here'} text={tab === 'all' ? 'Create your first listing with details and photos. It goes live as soon as you publish it.' : 'No listings match this filter.'} action={tab === 'all' ? { href: '/dashboard/listings/new', label: 'Create a listing' } : undefined} />
             ) : (
@@ -134,6 +152,6 @@ function PageNav({ meta, setPage }: { meta: { page: number; totalPages: number }
 }
 void Pagination;
 
-export function Dashboard() {
-  return <SellerGate allowPending>{(seller) => <Content shopName={seller.shopName} />}</SellerGate>;
+export function Dashboard({ published = false, applicationSubmitted = false }: { published?: boolean; applicationSubmitted?: boolean }) {
+  return <SellerGate allowPending>{(seller) => <Content shopName={seller.shopName} published={published} applicationSubmitted={applicationSubmitted} />}</SellerGate>;
 }

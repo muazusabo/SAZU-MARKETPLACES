@@ -45,7 +45,19 @@ export async function authedFetch<T>(path: string, init: RequestInit = {}): Prom
   try {
     return await run();
   } catch (e) {
-    if (e instanceof ApiError && e.status === 401 && (await refreshAccessToken())) return run();
+    if (e instanceof ApiError && e.status === 401) {
+      if (await refreshAccessToken()) {
+        try {
+          return await run();
+        } catch (retryError) {
+          if (retryError instanceof ApiError && retryError.status === 401 && typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('sazu:session-expired'));
+          }
+          throw retryError;
+        }
+      }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('sazu:session-expired'));
+    }
     throw e;
   }
 }

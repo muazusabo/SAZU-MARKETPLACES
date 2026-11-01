@@ -97,7 +97,7 @@ function Content() {
     <div>
       <h1 className="text-3xl font-bold">Platform settings</h1>
       <p className="mt-1 text-muted-foreground">Changes apply within seconds and are recorded in the audit log. Empty content pages show “not published yet” to visitors rather than invented text.</p>
-      {q.isLoading ? <Skeleton className="mt-6 h-64" /> : q.isError ? <div className="mt-6"><ErrorState message="We couldn’t load settings." /></div> : groups.map((g) => (
+      {q.isLoading ? <Skeleton className="mt-6 h-64" /> : q.isError ? <div className="mt-6"><ErrorState message="We couldn’t load settings." error={q.error} onRetry={() => { void q.refetch(); }} /></div> : groups.map((g) => (
         <section key={g} aria-label={g} className="mt-8">
           <h2 className="mb-3 text-xl font-bold">{g}</h2>
           <div className="grid gap-3">{q.data!.filter((s) => s.group === g).map((s) => <SettingRow key={`${s.key}-${JSON.stringify(s.value)}`} s={s} onSaved={refresh} />)}</div>
