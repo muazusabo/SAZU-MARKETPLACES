@@ -1,0 +1,19 @@
+# Local development PostgreSQL only. Never use these credentials in production.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sazu
+      POSTGRES_PASSWORD: sazu_dev_password
+      POSTGRES_DB: sazu_marketplace
+    ports:
+      - '5432:5432'
+    volumes:
+      - sazu_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sazu -d sazu_marketplace']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  sazu_pgdata:
