@@ -39,7 +39,7 @@ export function RegisterForm() {
         <div className="rounded-lg border bg-card p-5" role="status">
           <MailCheck aria-hidden className="size-7 text-success" />
           <p className="mt-3">
-            If <strong>{doneEmail}</strong> can be used for a new account, we’ve sent an 8-digit verification code. It stays valid for 10 minutes.
+            If <strong>{doneEmail}</strong> can be used for a new account, we’ll send an 8-digit verification code. It stays valid for 10 minutes.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">No email? Check spam or resend a code from the verification screen.</p>
         </div>
