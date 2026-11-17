@@ -75,7 +75,7 @@ export const envSchema = z
       }
     }
     if (env.STORAGE_DRIVER === 's3' || (env.STORAGE_DRIVER === 'cloudinary' && env.STORAGE_LEGACY_DRIVER === 's3')) {
-      for (const k of ['S3_REGION', 'S3_BUCKET_PUBLIC', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const) {
+      for (const k of ['S3_REGION', 'S3_BUCKET_PUBLIC', 'S3_BUCKET_PRIVATE', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const) {
         if (!env[k]) ctx.addIssue({ code: 'custom', path: [k], message: `${k} is required when S3 storage is enabled` });
       }
     }

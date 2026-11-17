@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { StorageDriver, Visibility } from './storage.types';
 
 export interface S3Options {
@@ -26,6 +26,12 @@ export class S3StorageDriver implements StorageDriver {
       // Object keys contain a random UUID, so a collision is not expected; never overwrite regardless.
       IfNoneMatch: '*',
     }));
+  }
+
+  async get(key: string, visibility: Visibility): Promise<Buffer> {
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket(visibility), Key: key }));
+    if (!result.Body) throw new Error('Stored object has no readable body');
+    return Buffer.from(await result.Body.transformToByteArray());
   }
 
   async delete(key: string, visibility: Visibility): Promise<void> {

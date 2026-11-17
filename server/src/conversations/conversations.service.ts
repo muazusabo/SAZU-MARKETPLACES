@@ -1,14 +1,18 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, Logger, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PRODUCT_FROM_SQL, VISIBLE_PRODUCT_SQL } from '../products/visibility';
 import { RealtimeService } from '../realtime/realtime.service';
 import { SettingsService } from '../settings/settings.service';
+import { ImageService, sniffImage } from '../storage/image.service';
 import { StorageService } from '../storage/storage.service';
+import { MULTER_HARD_LIMIT } from '../common/upload';
 
 const LISTING_STATE_SQL = `CASE WHEN p.id IS NULL OR p.status <> 'published' OR sp.status IS DISTINCT FROM 'approved'
   OR (p.expires_at IS NOT NULL AND p.expires_at <= now()) THEN 'removed' ELSE p.availability END`;
 const OTHER_SQL = `CASE WHEN c.buyer_id = $1 THEN c.seller_id ELSE c.buyer_id END`;
+const ATTACHMENT_MAX_BYTES = MULTER_HARD_LIMIT;
 
 /** Everything a participant sees about a conversation. Always scoped to `me` via the participants join. */
 const CONVERSATION_SELECT = `
@@ -16,7 +20,8 @@ const CONVERSATION_SELECT = `
          op.display_name AS other_name, op.avatar_path AS other_avatar, sp.shop_name, sp.avatar_path AS shop_avatar,
          p.id AS product_id, p.slug AS product_slug, p.title AS product_title, p.price_kobo, ${LISTING_STATE_SQL} AS listing_state,
          COALESCE(img.thumb_path, img.storage_path) AS image_path,
-         lm.body AS last_body, lm.sender_id AS last_sender, lm.created_at AS last_at,
+         COALESCE(NULLIF(lm.body, ''), CASE WHEN lm.attachment_path IS NOT NULL THEN 'Sent an attachment' END) AS last_body,
+         lm.sender_id AS last_sender, lm.created_at AS last_at,
          (SELECT count(*)::int FROM messages um WHERE um.conversation_id = c.id AND um.sender_id <> $1
             AND um.id > COALESCE(me.last_read_message_id, 0)) AS unread_count,
          EXISTS (SELECT 1 FROM user_blocks b WHERE b.blocker_id = $1 AND b.blocked_id = ${OTHER_SQL}) AS blocked_by_me,
@@ -27,15 +32,17 @@ const CONVERSATION_SELECT = `
   LEFT JOIN seller_profiles sp ON sp.user_id = c.seller_id
   LEFT JOIN products p ON p.id = c.product_id
   LEFT JOIN LATERAL (SELECT storage_path, thumb_path FROM product_images i WHERE i.product_id = p.id ORDER BY i.sort_order, i.created_at LIMIT 1) img ON true
-  LEFT JOIN LATERAL (SELECT body, sender_id, created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) lm ON true`;
+  LEFT JOIN LATERAL (SELECT body, attachment_path, sender_id, created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) lm ON true`;
 
 interface Participation { other_id: string; my_name: string }
 
 @Injectable()
 export class ConversationsService {
+  private readonly logger = new Logger(ConversationsService.name);
+
   constructor(
     private readonly db: DatabaseService, private readonly settings: SettingsService, private readonly storage: StorageService,
-    private readonly realtime: RealtimeService, private readonly notifications: NotificationsService,
+    private readonly realtime: RealtimeService, private readonly notifications: NotificationsService, private readonly images: ImageService,
   ) {}
 
   private present(r: Record<string, unknown>, userId: string) {
@@ -78,7 +85,7 @@ export class ConversationsService {
     return rows[0];
   }
 
-  private pushMessage(senderId: string, otherId: string, conversationId: string, m: { id: string; body: string; createdAt: Date }) {
+  private pushMessage(senderId: string, otherId: string, conversationId: string, m: { id: string; body: string; createdAt: Date; attachment?: { fileName: string; contentType: string; size: number } }) {
     this.realtime.emitToUser(otherId, 'message:new', { conversationId, message: { ...m, mine: false } });
     this.realtime.emitToUser(senderId, 'message:new', { conversationId, message: { ...m, mine: true } }); // keeps the sender's other tabs in sync
   }
@@ -164,9 +171,9 @@ export class ConversationsService {
   async messages(userId: string, conversationId: string, before: number | undefined, limit: number) {
     const who = await this.participation(userId, conversationId);
     const [{ rows }, other] = await Promise.all([
-      this.db.query<{ id: string; sender_id: string; body: string; created_at: Date }>(
+      this.db.query<{ id: string; sender_id: string; body: string; created_at: Date; attachment_name: string | null; attachment_type: string | null; attachment_size: number | null }>(
         // Columns are qualified (m.id) on purpose: an unqualified ORDER BY id would sort by the text alias, not the number.
-        `SELECT m.id::text AS id, m.sender_id, m.body, m.created_at FROM messages m
+        `SELECT m.id::text AS id, m.sender_id, m.body, m.created_at, m.attachment_name, m.attachment_type, m.attachment_size FROM messages m
          WHERE m.conversation_id = $1 AND ($2::bigint IS NULL OR m.id < $2) ORDER BY m.id DESC LIMIT $3`, [conversationId, before ?? null, limit + 1]),
       this.db.query<{ last: string | null }>('SELECT last_read_message_id::text AS last FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2', [conversationId, who.other_id]),
     ]);
@@ -175,7 +182,11 @@ export class ConversationsService {
     const page = rows.slice(0, limit).reverse(); // oldest first for display
     return {
       // `read` (seen by the other person) is only meaningful for my own messages.
-      data: page.map((m) => ({ id: m.id, mine: m.sender_id === userId, body: m.body, createdAt: m.created_at, read: m.sender_id === userId ? BigInt(m.id) <= otherRead : null })),
+      data: page.map((m) => ({
+        id: m.id, mine: m.sender_id === userId, body: m.body, createdAt: m.created_at,
+        read: m.sender_id === userId ? BigInt(m.id) <= otherRead : null,
+        attachment: m.attachment_name ? { fileName: m.attachment_name, contentType: m.attachment_type!, size: m.attachment_size! } : null,
+      })),
       meta: { hasMore, nextBefore: hasMore ? page[0]!.id : null },
     };
   }
@@ -198,6 +209,85 @@ export class ConversationsService {
     this.pushMessage(userId, who.other_id, conversationId, { id: m.id, body, createdAt: m.created_at });
     await this.notifications.notifyNewMessage(who.other_id, conversationId, who.my_name, body);
     return { id: m.id, mine: true, body, createdAt: m.created_at, read: false };
+  }
+
+  async sendAttachment(userId: string, conversationId: string, file: Express.Multer.File | undefined, body = '') {
+    const who = await this.participation(userId, conversationId);
+    const blocked = await this.blocks(userId, who.other_id);
+    if (blocked.byMe) throw new ForbiddenException('You’ve blocked this person. Unblock them to send messages.');
+    if (blocked.byThem) throw new ForbiddenException('You can’t send messages in this conversation.');
+    await this.assertNotSpamming(userId, body);
+
+    if (!file?.buffer?.length) throw new BadRequestException('Choose an attachment to upload.');
+    if (file.size > ATTACHMENT_MAX_BYTES) {
+      throw new PayloadTooLargeException(`Attachments can be at most ${(ATTACHMENT_MAX_BYTES / 1024 / 1024).toFixed(0)} MB.`);
+    }
+    const input = file.buffer;
+    const kind = sniffImage(input);
+    let contentType: 'image/webp' | 'application/pdf';
+    let fileName: string;
+    let data: Buffer;
+    if (kind) {
+      const processed = await this.images.processListingImage(input, await this.settings.get('allowed_image_types'));
+      contentType = 'image/webp';
+      data = processed.main;
+      fileName = this.attachmentFileName(file!.originalname, 'webp');
+    } else if (input.length >= 12 && input.toString('ascii', 0, 5) === '%PDF-'
+      && input.subarray(Math.max(0, input.length - 1024)).toString('latin1').includes('%%EOF')) {
+      contentType = 'application/pdf';
+      data = input;
+      fileName = this.attachmentFileName(file!.originalname, 'pdf');
+    } else {
+      throw new BadRequestException('Attach a JPEG, PNG, WebP image or PDF document.');
+    }
+    if (data.length > ATTACHMENT_MAX_BYTES) {
+      throw new PayloadTooLargeException(`Processed attachments can be at most ${(ATTACHMENT_MAX_BYTES / 1024 / 1024).toFixed(0)} MB.`);
+    }
+
+    const key = `messages/${conversationId}/${randomUUID()}.${contentType === 'application/pdf' ? 'pdf' : 'webp'}`;
+    await this.storage.putPrivate(key, data, contentType);
+    try {
+      const m = await this.db.transaction(async (c) => {
+        const inserted = await c.query<{ id: string; created_at: Date }>(
+          `INSERT INTO messages (conversation_id, sender_id, body, attachment_path, attachment_name, attachment_type, attachment_size)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id::text AS id, created_at`,
+          [conversationId, userId, body, key, fileName, contentType, data.length],
+        );
+        await c.query('UPDATE conversations SET last_message_at = $2 WHERE id = $1', [conversationId, inserted.rows[0]!.created_at]);
+        return inserted.rows[0]!;
+      });
+      const attachment = { fileName, contentType, size: data.length };
+      this.pushMessage(userId, who.other_id, conversationId, { id: m.id, body, createdAt: m.created_at, attachment });
+      await this.notifications.notifyNewMessage(who.other_id, conversationId, who.my_name, body || 'Sent an attachment');
+      return { id: m.id, mine: true, body, createdAt: m.created_at, read: false, attachment };
+    } catch (error) {
+      try {
+        await this.storage.deletePrivate(key);
+      } catch (cleanupError) {
+        this.logger.error(`Could not clean up failed chat attachment ${key}: ${(cleanupError as Error).message}`);
+      }
+      throw error;
+    }
+  }
+
+  private attachmentFileName(originalName: string, extension: 'webp' | 'pdf'): string {
+    const base = originalName.normalize('NFKC').replace(/[\\/]/g, '_').replace(/[^\p{L}\p{N}._ -]/gu, '_').slice(0, 120);
+    const stem = base.replace(/\.[^.]*$/, '').trim() || 'attachment';
+    return `${stem}.${extension}`;
+  }
+
+  async getAttachment(userId: string, conversationId: string, messageId: string) {
+    await this.participation(userId, conversationId);
+    if (!/^\d{1,19}$/.test(messageId) || BigInt(messageId) > 9_223_372_036_854_775_807n) {
+      throw new BadRequestException('Invalid message id.');
+    }
+    const { rows } = await this.db.query<{ attachment_path: string; attachment_name: string; attachment_type: string }>(
+      `SELECT attachment_path, attachment_name, attachment_type
+       FROM messages WHERE id = $1 AND conversation_id = $2 AND attachment_path IS NOT NULL`,
+      [messageId, conversationId],
+    );
+    if (!rows[0]) throw new NotFoundException('Attachment not found.');
+    return { ...rows[0], data: await this.storage.getPrivate(rows[0].attachment_path) };
   }
 
   /** Per-minute cap, plus a check for the same long message blasted to many different conversations. */

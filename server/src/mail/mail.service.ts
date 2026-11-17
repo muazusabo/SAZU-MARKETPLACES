@@ -31,17 +31,26 @@ export class MailService {
     }
   }
 
-  /** Never throws: a mail outage must not break registration or reveal account state. */
+  /** Start delivery without making account or password flows wait on the SMTP server. */
   async send(msg: MailMessage): Promise<void> {
     try {
-      if (this.transport) {
-        await this.transport.sendMail({ from: this.from, ...msg });
+      const transport = this.transport;
+      if (transport) {
+        void this.deliver(transport, msg);
       } else if (!this.isProd) {
         // Development only: no SMTP configured, so print the message (links included) to the API log.
         this.logger.warn(`DEV MAIL (SMTP not configured)\nTo: ${msg.to}\nSubject: ${msg.subject}\n${msg.text}`);
       } else {
         this.logger.error('SMTP is not configured; email not sent');
       }
+    } catch (err) {
+      this.logger.error(`Email delivery failed: ${(err as Error).message}`);
+    }
+  }
+
+  private async deliver(transport: Transporter, msg: MailMessage): Promise<void> {
+    try {
+      await transport.sendMail({ from: this.from, ...msg });
     } catch (err) {
       this.logger.error(`Email delivery failed: ${(err as Error).message}`);
     }

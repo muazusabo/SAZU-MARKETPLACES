@@ -42,6 +42,14 @@ describe('validateEnv', () => {
       CLOUDINARY_API_KEY: 'key',
       CLOUDINARY_API_SECRET: 'secret',
     })).toThrow(/S3_REGION/);
+    expect(() => validateEnv({
+      ...base,
+      STORAGE_DRIVER: 's3',
+      S3_REGION: 'auto',
+      S3_BUCKET_PUBLIC: 'public',
+      S3_ACCESS_KEY_ID: 'key',
+      S3_SECRET_ACCESS_KEY: 'secret',
+    })).toThrow(/S3_BUCKET_PRIVATE/);
   });
 
   it('requires SMTP credentials to be configured as a pair', () => {

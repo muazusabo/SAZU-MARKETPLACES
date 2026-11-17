@@ -70,6 +70,8 @@ describe('LocalStorageDriver', () => {
     await expect(stat(join(root, 'public/products/a/b.webp'))).rejects.toThrow();
     await d.put('verification/x.pdf', Buffer.from('p'), 'application/pdf', 'private');
     await expect(stat(join(root, 'public/verification/x.pdf'))).rejects.toThrow(); // private is a separate tree
+    expect((await d.get('verification/x.pdf', 'private')).toString()).toBe('p');
+    await expect(d.get('../escape.txt', 'private')).rejects.toThrow(/Invalid storage key/);
   });
 });
 
@@ -89,5 +91,11 @@ describe('S3StorageDriver (mocked client: not verified against a real bucket)', 
   it('refuses private writes when no private bucket is configured', async () => {
     const d = new S3StorageDriver({ region: 'r', accessKeyId: 'k', secretAccessKey: 's', publicBucket: 'pub' }, { send: jest.fn() });
     await expect(d.put('v', Buffer.from('x'), 'a/b', 'private')).rejects.toThrow(/private bucket/);
+  });
+  it('reads private objects only from the private bucket', async () => {
+    const send = jest.fn().mockResolvedValue({ Body: { transformToByteArray: async () => Uint8Array.from([1, 2, 3]) } });
+    const d = new S3StorageDriver({ region: 'r', accessKeyId: 'k', secretAccessKey: 's', publicBucket: 'pub', privateBucket: 'priv' }, { send });
+    expect(await d.get('messages/a.pdf', 'private')).toEqual(Buffer.from([1, 2, 3]));
+    expect(send.mock.calls[0]![0].input).toEqual({ Bucket: 'priv', Key: 'messages/a.pdf' });
   });
 });

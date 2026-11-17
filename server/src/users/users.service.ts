@@ -1,5 +1,6 @@
-import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { AuditService } from '../audit/audit.service';
 import { AuthUser, Role } from '../auth/auth.constants';
 import { assertUpload } from '../common/upload';
 import { DatabaseService } from '../database/database.service';
@@ -31,6 +32,7 @@ export class UsersService {
     private readonly storage: StorageService,
     private readonly images: ImageService,
     private readonly settings: SettingsService,
+    private readonly audit: AuditService,
   ) {}
 
   /** Minimal identity for the auth guard. Returns null unless the account is active. */
@@ -66,6 +68,32 @@ export class UsersService {
       sets.push(`${col} = $${vals.length}`); // column names come from the fixed map above, never from input
     }
     if (sets.length) await this.db.query(`UPDATE profiles SET ${sets.join(', ')} WHERE user_id = $1`, vals);
+    return this.getMe(id);
+  }
+
+  async requestStudentVerification(id: string) {
+    const updated = await this.db.query(
+      `UPDATE profiles
+       SET student_verification_status = 'pending'
+       WHERE user_id = $1 AND student_verification_status IN ('unverified', 'rejected')
+       RETURNING user_id`,
+      [id],
+    );
+    if (!updated.rowCount) {
+      const current = await this.db.query<{ student_verification_status: string }>(
+        'SELECT student_verification_status FROM profiles WHERE user_id = $1',
+        [id],
+      );
+      if (!current.rows[0]) throw new NotFoundException('User profile not found.');
+      if (current.rows[0].student_verification_status === 'pending') {
+        throw new ConflictException('Your student verification request is already awaiting review.');
+      }
+      if (current.rows[0].student_verification_status === 'verified') {
+        throw new ConflictException('Your student account is already verified.');
+      }
+      throw new ConflictException('Your student verification request could not be submitted. Refresh and try again.');
+    }
+    await this.audit.record(id, 'user.student_verification_request', 'user', id);
     return this.getMe(id);
   }
 

@@ -73,6 +73,13 @@ describe('Messaging, notifications, blocking, reports and realtime (real Postgre
   }
   const nextEvent = <T = unknown>(socket: Socket, event: string, ms = 2500): Promise<T | 'timeout'> =>
     new Promise((resolve) => { const t = setTimeout(() => resolve('timeout'), ms); socket.once(event, (p: T) => { clearTimeout(t); resolve(p); }); });
+  const emitAck = (socket: Socket, event: string, payload: unknown) =>
+    new Promise<{ ok: boolean; callId?: string; error?: string }>((resolve, reject) => {
+      socket.timeout(3000).emit(event, payload, (error: Error | null, response: { ok: boolean; callId?: string; error?: string }) => {
+        if (error) reject(error);
+        else resolve(response);
+      });
+    });
 
   beforeAll(async () => {
     await runner({ databaseUrl: TEST_DB, dir: join(__dirname, '../migrations'), direction: 'up', migrationsTable: 'pgmigrations', count: Infinity, log: () => undefined });
@@ -144,6 +151,37 @@ describe('Messaging, notifications, blocking, reports and realtime (real Postgre
       await send(seller, convo, 'Yes it is').expect(201);
       const b = (await api().get('/api/v1/notifications').set(auth(buyer))).body.data;
       expect(b[0].title).toBe('New message from Aisha Tech'); // sellers appear under their shop name
+    });
+
+    describe('private message attachments', () => {
+      it('sends and downloads a PDF only for conversation participants', async () => {
+        const stranger = await user('stranger@example.com');
+        const pdf = Buffer.from('%PDF-1.7\nSAZU attachment test\n%%EOF\n');
+        const sent = await api().post(`/api/v1/conversations/${convo}/attachments`).set(auth(buyer))
+          .field('body', 'Please see the document.')
+          .attach('file', pdf, { filename: 'campus notes.pdf', contentType: 'application/pdf' }).expect(201);
+        expect(sent.body.data).toMatchObject({
+          body: 'Please see the document.',
+          attachment: { fileName: 'campus notes.pdf', contentType: 'application/pdf', size: pdf.length },
+        });
+        const history = await api().get(`/api/v1/conversations/${convo}/messages`).set(auth(seller)).expect(200);
+        expect(history.body.data[0].attachment.fileName).toBe('campus notes.pdf');
+        const downloaded = await api().get(`/api/v1/conversations/${convo}/attachments/${sent.body.data.id}`)
+          .set(auth(seller)).buffer(true).parse((res, callback) => {
+            const chunks: Buffer[] = [];
+            res.on('data', (chunk: Buffer | string) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            res.on('end', () => callback(null, Buffer.concat(chunks)));
+          }).expect(200);
+        expect(downloaded.headers['content-type']).toBe('application/pdf');
+        expect((downloaded.body as Buffer).toString()).toContain('SAZU attachment test');
+        await api().get(`/api/v1/conversations/${convo}/attachments/${sent.body.data.id}`).set(auth(stranger)).expect(404);
+      });
+
+      it('rejects file content that is not an allowed image or PDF', async () => {
+        await api().post(`/api/v1/conversations/${convo}/attachments`).set(auth(buyer))
+          .attach('file', Buffer.from('not a PDF'), { filename: 'notes.pdf', contentType: 'application/pdf' }).expect(400);
+        expect((await api().get(`/api/v1/conversations/${convo}/messages`).set(auth(buyer))).body.data).toHaveLength(0);
+      });
     });
     it('folds many messages into one unread notification, and starts a new one after it is read', async () => {
       for (const t of ['one', 'two', 'three']) await send(buyer, convo, t).expect(201);
@@ -344,6 +382,37 @@ describe('Messaging, notifications, blocking, reports and realtime (real Postgre
       const receipt = nextEvent<{ conversationId: string }>(buyerSock, 'conversation:read');
       await api().post(`/api/v1/conversations/${convo}/read`).set(auth(seller)).expect(200);
       expect(await receipt).toEqual({ conversationId: convo });
+    });
+    it('only signals voice calls between online participants of the conversation', async () => {
+      const buyerSocket = (await connect(await tokenFor(buyerUserId))).socket;
+      const buyerSecondTab = (await connect(await tokenFor(buyerUserId))).socket;
+      const sellerSocket = (await connect(await tokenFor(sellerUserId))).socket;
+      const incoming = nextEvent<{ callId: string; conversationId: string; callerName: string }>(sellerSocket, 'call:incoming');
+      const outgoing = nextEvent<{ callId: string; calleeName: string }>(buyerSocket, 'call:outgoing');
+      const started = await emitAck(buyerSocket, 'call:initiate', { conversationId: convo });
+      expect(started.ok).toBe(true);
+      const received = await incoming;
+      expect(received).toMatchObject({ callId: started.callId, conversationId: convo, callerName: 'User buyer' });
+      expect(await outgoing).toMatchObject({ callId: started.callId, calleeName: 'Aisha Tech' });
+
+      const answeredElsewhere = nextEvent(buyerSecondTab, 'call:answered_elsewhere');
+      expect(await emitAck(sellerSocket, 'call:accept', { callId: started.callId })).toMatchObject({ ok: true });
+      expect(await answeredElsewhere).toMatchObject({ callId: started.callId });
+
+      const signal = nextEvent<{ callId: string; signal: { type: string; sdp: string } }>(sellerSocket, 'call:signal');
+      expect(await emitAck(buyerSocket, 'call:signal', {
+        callId: started.callId, signal: { type: 'offer', sdp: 'v=0\r\ns=voice call test\r\n' },
+      })).toMatchObject({ ok: true });
+      expect(await signal).toMatchObject({ callId: started.callId, signal: { type: 'offer' } });
+
+      await user('voice-stranger@example.com');
+      const strangerSocket = (await connect(await tokenFor(ids['voice-stranger@example.com']!))).socket;
+      expect(await emitAck(strangerSocket, 'call:signal', {
+        callId: started.callId, signal: { type: 'answer', sdp: 'v=0\r\n' },
+      })).toMatchObject({ ok: false });
+      const ended = nextEvent<{ callId: string; reason: string }>(sellerSocket, 'call:ended');
+      expect(await emitAck(buyerSocket, 'call:end', { callId: started.callId })).toMatchObject({ ok: true });
+      expect(await ended).toMatchObject({ callId: started.callId, reason: 'ended' });
     });
     it('does not deliver anything to a blocked sender’s failed attempts', async () => {
       const sellerSock = (await connect(await tokenFor(sellerUserId))).socket;

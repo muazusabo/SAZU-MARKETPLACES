@@ -56,6 +56,11 @@ export class CloudinaryStorageDriver implements StorageDriver {
     });
   }
 
+  async get(_key: string, visibility: Visibility): Promise<Buffer> {
+    if (visibility !== 'public') throw new Error('Cloudinary storage is only configured for public images');
+    throw new Error('Reading public Cloudinary objects is not supported by this storage driver');
+  }
+
   async delete(key: string, visibility: Visibility): Promise<void> {
     if (visibility !== 'public') throw new Error('Cloudinary storage is only configured for public images');
     const result = await this.client.destroy(this.publicId(key), {

@@ -78,4 +78,12 @@ export class StorageService {
   putPrivate(key: string, body: Buffer, contentType: string) {
     return this.legacyDriver.put(key, body, contentType, 'private');
   }
+
+  getPrivate(key: string) {
+    return this.legacyDriver.get(key, 'private');
+  }
+
+  deletePrivate(key: string) {
+    return this.legacyDriver.delete(key, 'private');
+  }
 }

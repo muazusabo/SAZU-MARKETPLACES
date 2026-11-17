@@ -34,7 +34,7 @@ type Def = { type: 'boolean' | 'int' | 'text' | 'image' | 'imageTypes'; group: s
 export const SETTING_DEFS: Record<SettingKey, Def> = {
   seller_approval_required: { type: 'boolean', group: 'Sellers and listings', label: 'Require administrator approval for sellers' },
   require_listing_image: { type: 'boolean', group: 'Sellers and listings', label: 'Require at least one photo to submit a listing' },
-  student_verification_required: { type: 'boolean', group: 'Sellers and listings', label: 'Student verification required (informational: verification flow not built yet)' },
+  student_verification_required: { type: 'boolean', group: 'Sellers and listings', label: 'Student verification required (informational; accounts can request review from their dashboard)' },
   max_active_listings_per_seller: { type: 'int', min: 1, max: 1000, group: 'Sellers and listings', label: 'Pending plus published listings per seller' },
   listing_expiry_days: { type: 'int', min: 0, max: 3650, group: 'Sellers and listings', label: 'Days until a published listing expires (0 = never)' },
   max_images_per_listing: { type: 'int', min: 1, max: 12, group: 'Images', label: 'Maximum photos per listing' },

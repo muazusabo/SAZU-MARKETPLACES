@@ -22,7 +22,7 @@ export class AdminManagementController {
   constructor(private readonly users: AdminUsersService, private readonly catalog: AdminCatalogService) {}
 
   @Get('users') @ApiOperation({ summary: 'Search users' })
-  listUsers(@Query() q: AdminUsersQuery) { return this.users.list(q.q, q.status, q.role, q.page, q.pageSize); }
+  listUsers(@Query() q: AdminUsersQuery) { return this.users.list(q.q, q.status, q.role, q.page, q.pageSize, q.studentVerification); }
 
   @Get('users/:id') @ApiOperation({ summary: 'One user (never includes password hashes or tokens)' })
   user(@Param('id', uuid()) id: string) { return this.users.detail(id); }

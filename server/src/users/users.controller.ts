@@ -3,7 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { MULTER_HARD_LIMIT } from '../common/upload';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { AUTH_THROTTLE, AVATAR_THROTTLE, AuthUser } from '../auth/auth.constants';
+import { AUTH_THROTTLE, AVATAR_THROTTLE, AuthUser, VERIFY_THROTTLE } from '../auth/auth.constants';
 import { CurrentUser } from '../auth/decorators';
 import { ConfirmPasswordDto, UpdateProfileDto } from './dto/users.dto';
 import { UsersService } from './users.service';
@@ -24,6 +24,14 @@ export class UsersController {
   @ApiOperation({ summary: 'Update own profile (name, display name, phone, campus area)' })
   update(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto) {
     return this.users.updateMe(user.id, dto);
+  }
+
+  @Post('me/student-verification')
+  @HttpCode(200)
+  @Throttle(VERIFY_THROTTLE)
+  @ApiOperation({ summary: 'Request student verification for the current account' })
+  requestStudentVerification(@CurrentUser() user: AuthUser) {
+    return this.users.requestStudentVerification(user.id);
   }
 
   @Post('me/avatar')

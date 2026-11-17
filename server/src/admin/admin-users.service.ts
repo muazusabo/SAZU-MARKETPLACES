@@ -10,11 +10,12 @@ const likeEscape = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
 export class AdminUsersService {
   constructor(private readonly db: DatabaseService, private readonly sessions: SessionService, private readonly audit: AuditService, private readonly notifications: NotificationsService) {}
 
-  async list(q: string | undefined, status = 'all', role: string | undefined, page = 1, pageSize = 20) {
+  async list(q: string | undefined, status = 'all', role: string | undefined, page = 1, pageSize = 20, studentVerification?: string) {
     const params: unknown[] = []; const where: string[] = [];
     if (q) { params.push(`%${likeEscape(q)}%`); where.push(`(u.email ILIKE $${params.length} ESCAPE '\\' OR p.display_name ILIKE $${params.length} ESCAPE '\\' OR p.full_name ILIKE $${params.length} ESCAPE '\\')`); }
     if (status !== 'all') { params.push(status); where.push(`u.status = $${params.length}`); }
     if (role) { params.push(role); where.push(`EXISTS (SELECT 1 FROM user_roles r WHERE r.user_id = u.id AND r.role = $${params.length})`); }
+    if (studentVerification) { params.push(studentVerification); where.push(`p.student_verification_status = $${params.length}`); }
     params.push(pageSize, (page - 1) * pageSize);
     const { rows } = await this.db.query<Record<string, unknown>>(
       `SELECT u.id, u.email, u.status, (u.email_verified_at IS NOT NULL) AS email_verified, u.created_at, u.last_login_at, p.display_name, p.student_verification_status,

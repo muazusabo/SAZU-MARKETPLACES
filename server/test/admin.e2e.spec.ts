@@ -347,12 +347,14 @@ describe('Administration (real PostgreSQL)', () => {
 
   describe('user management', () => {
     const uid = (e: string) => ids[`${e}@example.com`]!;
-    it('searches users by email or name, filters by status and role, and treats wildcards literally', async () => {
+    it('searches users by email or name, filters by status, role and student verification, and treats wildcards literally', async () => {
       expect((await api().get('/api/v1/admin/users?q=buyer').set(auth(admin))).body.data.map((u: { email: string }) => u.email)).toEqual(['buyer@example.com']);
       expect((await api().get('/api/v1/admin/users?role=moderator').set(auth(admin))).body.data.map((u: { email: string }) => u.email)).toEqual(['mod@example.com']);
+      expect((await api().get('/api/v1/admin/users?studentVerification=unverified').set(auth(admin))).body.data.map((u: { email: string }) => u.email)).toContain('buyer@example.com');
       expect((await api().get('/api/v1/admin/users?q=%25').set(auth(admin))).body.data).toEqual([]);
       expect((await api().get('/api/v1/admin/users').set(auth(admin))).body.meta.total).toBe(5);
       await api().get('/api/v1/admin/users?status=bogus').set(auth(admin)).expect(400);
+      await api().get('/api/v1/admin/users?studentVerification=bogus').set(auth(admin)).expect(400);
       await api().get('/api/v1/admin/users?pageSize=500').set(auth(admin)).expect(400);
     });
     it('shows a user’s record without ever exposing password hashes or tokens', async () => {
@@ -396,6 +398,18 @@ describe('Administration (real PostgreSQL)', () => {
       expect((await api().get('/api/v1/users/me').set(auth(buyer))).body.data.profile.studentVerificationStatus).toBe('verified');
       await api().patch(`/api/v1/admin/users/${uid('buyer')}/student-verification`).set(auth(admin)).send({ status: 'approved' }).expect(400);
       expect((await audit('user.student_verification'))[0].metadata).toMatchObject({ status: 'verified' });
+    });
+    it('lets signed-in users request and retry student verification without email confirmation', async () => {
+      await pool.query('UPDATE users SET email_verified_at = NULL WHERE id = $1', [buyerId]);
+      await api().post('/api/v1/users/me/student-verification').set(auth(buyer)).expect(200);
+      expect((await api().get('/api/v1/users/me').set(auth(buyer))).body.data.profile.studentVerificationStatus).toBe('pending');
+      expect((await api().post('/api/v1/users/me/student-verification').set(auth(buyer)).expect(409)).body.message).toMatch(/already awaiting review/);
+      expect((await api().get('/api/v1/admin/users?studentVerification=pending').set(auth(admin))).body.data.map((u: { id: string }) => u.id)).toContain(buyerId);
+      await api().patch(`/api/v1/admin/users/${buyerId}/student-verification`).set(auth(admin)).send({ status: 'rejected' }).expect(200);
+      await api().post('/api/v1/users/me/student-verification').set(auth(buyer)).expect(200);
+      await api().patch(`/api/v1/admin/users/${buyerId}/student-verification`).set(auth(admin)).send({ status: 'verified' }).expect(200);
+      expect((await api().post('/api/v1/users/me/student-verification').set(auth(buyer)).expect(409)).body.message).toMatch(/already verified/);
+      expect((await audit('user.student_verification_request')).length).toBe(2);
     });
   });
 

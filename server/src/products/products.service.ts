@@ -69,7 +69,7 @@ export class ProductsService {
       `SELECT p.id, p.slug, p.title, p.price_kobo, p.product_type, p.condition, p.availability, p.status,
               p.campus_location, p.published_at,
               pc.slug AS category_slug, pc.name AS category_name,
-              s.slug AS seller_slug, s.shop_name, (s.verified_at IS NOT NULL) AS seller_verified,
+              s.slug AS seller_slug, s.shop_name, s.avatar_path AS seller_avatar, (s.verified_at IS NOT NULL) AS seller_verified,
               COALESCE(img.thumb_path, img.storage_path) AS image_path, img.storage_path AS image_fallback_path, img.alt_text AS image_alt,
               COALESCE(review_summary.review_count, 0)::int AS review_count,
               COALESCE(review_summary.average_rating, 0)::float AS average_rating,
@@ -97,7 +97,7 @@ export class ProductsService {
       condition: r.condition, availability: r.availability, status: r.status,
       campusLocation: r.campus_location, publishedAt: r.published_at,
       category: { slug: r.category_slug, name: r.category_name },
-      seller: { slug: r.seller_slug, shopName: r.shop_name, verified: r.seller_verified },
+      seller: { slug: r.seller_slug, shopName: r.shop_name, avatarUrl: this.storage.publicUrl(r.seller_avatar as string | null), verified: r.seller_verified },
       image: r.image_path ? {
         url: this.storage.publicUrl(r.image_path as string)!,
         fallbackUrl: r.image_fallback_path ? this.storage.publicUrl(r.image_fallback_path as string) : null,

@@ -18,6 +18,10 @@ export class SendMessageDto {
   @ApiProperty({ minLength: 1, maxLength: 2000 }) @cleanBody() @IsString() @Length(1, 2000, { message: 'Write a message between 1 and 2,000 characters.' }) body: string;
 }
 
+export class SendAttachmentDto {
+  @ApiPropertyOptional({ maxLength: 2000 }) @IsOptional() @cleanBody() @IsString() @Length(0, 2000) body?: string;
+}
+
 export class MessagesQuery {
   @ApiPropertyOptional({ description: 'Return messages older than this message id' }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) before?: number;
   @ApiPropertyOptional({ default: 30, maximum: 50 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(50) limit?: number;

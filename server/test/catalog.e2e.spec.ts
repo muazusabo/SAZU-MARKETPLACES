@@ -219,6 +219,11 @@ describe('Public catalog (real PostgreSQL)', () => {
       expect(titles(await api().get('/api/v1/products?location=hostel%20a&sort=price_asc'))).toEqual(['A cheap', 'C pricey']);
       expect(titles(await api().get('/api/v1/products?category=books-study-materials'))).toEqual(['B mid']);
     });
+    it('includes the seller profile photo in listing-card data', async () => {
+      await pool.query(`UPDATE seller_profiles SET avatar_path = 'avatars/test-seller.webp' WHERE id = $1`, [sellerId]);
+      const response = await api().get('/api/v1/products?sort=newest').expect(200);
+      expect(response.body.data[0].seller.avatarUrl).toContain('avatars/test-seller.webp');
+    });
     it('a parent category includes its subcategories', async () => {
       await pool.query(`INSERT INTO categories (parent_id, slug, name) VALUES ($1, 'phones', 'Phones')`, [cat['electronics']]);
       await product({ title: 'D phone', price: 300000, cat: 'phones' });

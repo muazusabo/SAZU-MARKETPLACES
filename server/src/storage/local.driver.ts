@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import { StorageDriver, Visibility } from './storage.types';
 
@@ -20,6 +20,10 @@ export class LocalStorageDriver implements StorageDriver {
     const full = this.resolveSafe(key, visibility);
     await mkdir(dirname(full), { recursive: true });
     await writeFile(full, body, { flag: 'wx' }); // 'wx': fail instead of overwriting
+  }
+
+  async get(key: string, visibility: Visibility): Promise<Buffer> {
+    return readFile(this.resolveSafe(key, visibility));
   }
 
   async delete(key: string, visibility: Visibility): Promise<void> {

@@ -44,6 +44,7 @@ export class AdminUsersQuery extends PageQuery {
   @IsOptional() @Trim() @IsString() @MaxLength(100) q?: string;
   @IsOptional() @IsIn(['all', 'active', 'suspended', 'deactivated', 'deleted']) status?: string;
   @IsOptional() @IsIn(['user', 'seller', 'moderator', 'admin']) role?: string;
+  @IsOptional() @IsIn(['unverified', 'pending', 'verified', 'rejected']) studentVerification?: string;
 }
 export class SetUserStatusDto {
   @ApiProperty({ enum: ['active', 'suspended'] }) @IsIn(['active', 'suspended']) status: 'active' | 'suspended';
