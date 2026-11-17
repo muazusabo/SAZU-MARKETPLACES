@@ -1,13 +1,13 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
-  Heart, Menu, MessageCircle, Bell, X, Home, Search, Shapes, Store,
-  LayoutDashboard, type LucideIcon,
+  ArrowRight, Heart, Menu, MessageCircle, Bell, X, Home, Search, Shapes, Store,
+  LayoutDashboard, ChevronDown, type LucideIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useRealtime } from '@/components/realtime/realtime-provider';
@@ -50,7 +50,9 @@ function Logo({ imageUrl }: { imageUrl?: string }) {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const content = useQuery({ queryKey: ['public-site-content'], queryFn: fetchFreshPublicContent });
   const { status, user, logout } = useAuth();
   const { unreadMessages, unreadNotifications } = useRealtime();
@@ -59,94 +61,168 @@ export function SiteHeader() {
   const anonymous = status === 'anonymous';
   const isSeller = signedIn && user?.seller?.status === 'approved';
   const isStaff = signedIn && !!user?.roles.some((r) => r === 'admin' || r === 'moderator');
-  const navLinks = [...NAV_LINKS, ...(isSeller ? [{ href: '/dashboard', label: 'Seller dashboard' }] : []), ...(isStaff ? [{ href: '/admin', label: 'Admin' }] : [])];
+  const accountLinks = [
+    ...(isSeller ? [{ href: '/dashboard', label: 'Seller dashboard' }] : []),
+    ...(isStaff ? [{ href: '/admin', label: 'Admin dashboard' }] : []),
+  ];
   const isActive = (href: string) => href === '/'
     ? pathname === '/'
     : pathname === href || pathname.startsWith(`${href}/`);
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const term = searchTerm.trim().slice(0, 100);
+    router.push(term ? `/browse?q=${encodeURIComponent(term)}` : '/browse');
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-primary/10 bg-background/95 shadow-sm backdrop-blur-xl">
-      <div className="container flex h-[76px] items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-white/95 shadow-[0_3px_18px_-14px_rgba(3,61,46,0.5)] backdrop-blur-xl">
+      <div className="container flex h-[68px] items-center gap-2 sm:gap-4">
         <Logo imageUrl={content.data?.site_logo_url || undefined} />
-        <nav aria-label="Main" className="hidden min-w-0 items-center gap-1 rounded-full border bg-secondary/40 p-1 lg:flex">
-          {navLinks.map(({ href, label }) => {
+        <nav aria-label="Main" className="hidden min-w-0 items-center gap-1 xl:flex">
+          {NAV_LINKS.map(({ href, label }) => {
             const active = isActive(href);
-            const Icon = NAV_ICONS[href];
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   active
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-background hover:text-foreground',
+                    ? 'bg-brand-light-lime text-brand-deep'
+                    : 'text-muted-foreground hover:bg-brand-cream hover:text-brand-deep',
                 )}
               >
-                {Icon && <Icon aria-hidden className="size-4 shrink-0" />}
                 {label}
               </Link>
             );
           })}
         </nav>
-        <div className="flex shrink-0 items-center gap-1">
-          <div className="hidden items-center lg:flex">
+        <form onSubmit={submitSearch} role="search" className="ml-auto hidden min-w-0 max-w-[280px] flex-1 items-center rounded-full border border-border bg-brand-cream/70 px-3 transition-colors focus-within:border-primary/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10 md:flex xl:ml-0">
+          <label htmlFor="header-search" className="sr-only">Search products</label>
+          <Search aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            id="header-search"
+            type="search"
+            value={searchTerm}
+            maxLength={100}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search products..."
+            className="h-10 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <button type="submit" aria-label="Submit search" className="grid size-8 shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-brand-light-lime">
+            <ArrowRight aria-hidden className="size-4" />
+          </button>
+        </form>
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5 xl:ml-0">
+          <div className="hidden items-center xl:flex">
             {signedIn && [
               { href: '/wishlist', label: 'Wishlist', Icon: Heart },
               { href: '/messages', label: 'Messages', Icon: MessageCircle },
               { href: '/notifications', label: 'Notifications', Icon: Bell },
             ].map(({ href, label, Icon }) => (
-              <Button key={href} asChild variant="ghost" size="icon" className="relative rounded-full text-muted-foreground hover:text-primary">
+              <Button key={href} asChild variant="ghost" size="icon" className={cn('relative rounded-full text-muted-foreground hover:bg-brand-cream hover:text-primary', isActive(href) && 'bg-brand-cream text-primary')}>
                 <Link href={href} aria-label={badge(label) > 0 ? `${label}, ${badge(label)} unread` : label}>
                   <Icon />
-                  {badge(label) > 0 && <span aria-hidden className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-5 text-destructive-foreground">{badge(label) > 99 ? '99+' : badge(label)}</span>}
+                  {badge(label) > 0 && <span aria-hidden className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-destructive-foreground">{badge(label) > 99 ? '99+' : badge(label)}</span>}
                 </Link>
               </Button>
             ))}
           </div>
           {signedIn && user && (
-            <>
-              <Button asChild variant="outline" size="sm" className="hidden max-w-36 rounded-full lg:inline-flex">
-                <Link href="/account" className="truncate">{user.profile.displayName}</Link>
-              </Button>
-              <Button variant="ghost" size="sm" className="hidden rounded-full lg:inline-flex" onClick={() => void logout()}>Sign out</Button>
-            </>
+            <details className="group relative hidden xl:block">
+              <summary aria-label="Open account menu" className="flex cursor-pointer list-none items-center gap-2 rounded-full p-1 pr-2 transition-colors hover:bg-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                {user.profile.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.profile.avatarUrl} alt="" className="size-9 rounded-full border border-border object-cover" />
+                ) : (
+                  <span aria-hidden className="grid size-9 place-items-center rounded-full bg-brand-light-lime text-sm font-bold text-brand-deep">
+                    {user.profile.displayName.trim().slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="hidden max-w-24 truncate text-xs font-semibold text-foreground 2xl:block">{user.profile.displayName}</span>
+                <ChevronDown aria-hidden className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-border bg-white p-2 shadow-xl">
+                <div className="border-b border-border px-3 py-2">
+                  <p className="truncate text-sm font-bold">{user.profile.displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <Link href="/account" className="mt-1 flex rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-brand-cream">Your account</Link>
+                {accountLinks.map((item) => (
+                  <Link key={item.href} href={item.href} className="flex rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-brand-cream">{item.label}</Link>
+                ))}
+                <button type="button" onClick={() => void logout()} className="mt-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-destructive hover:bg-destructive/5">
+                  Sign out
+                </button>
+              </div>
+            </details>
           )}
           {anonymous && (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden rounded-full lg:inline-flex">
+              <Button asChild variant="ghost" size="sm" className="hidden rounded-full px-3 xl:inline-flex">
                 <Link href="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm" className="hidden rounded-full lg:inline-flex">
-                <Link href="/register">Create account</Link>
+              <Button asChild size="sm" className="hidden h-10 rounded-full px-4 xl:inline-flex">
+                <Link href="/register">Join SAZU</Link>
               </Button>
             </>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full lg:hidden"
+            className="rounded-full xl:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? 'Close menu' : 'Open menu'}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? <X /> : <Menu />}
+            {open ? <X aria-hidden /> : <Menu aria-hidden />}
           </Button>
         </div>
       </div>
       {open && (
-        <nav id="mobile-menu" aria-label="Mobile" className="border-t border-primary/10 bg-background/95 shadow-lg backdrop-blur-xl lg:hidden">
-          <ul className="container grid gap-1 py-3">
+        <nav id="mobile-menu" aria-label="Mobile" className="absolute inset-x-0 top-full max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-border bg-white shadow-xl xl:hidden">
+          <ul className="container grid gap-1 py-4">
+            <li className="mb-2">
+              <form onSubmit={submitSearch} role="search" className="flex items-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-3 focus-within:border-primary/40 focus-within:bg-white">
+                <label htmlFor="mobile-header-search" className="sr-only">Search products</label>
+                <Search aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                <input
+                  id="mobile-header-search"
+                  type="search"
+                  value={searchTerm}
+                  maxLength={100}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search products..."
+                  className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+                <button type="submit" className="rounded-full bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-brand-deep">Search</button>
+              </form>
+            </li>
             {[
-              ...navLinks,
+              ...NAV_LINKS,
               ...(signedIn
                 ? [
                     { href: '/wishlist', label: 'Wishlist' },
                     { href: '/messages', label: 'Messages' },
                     { href: '/notifications', label: 'Notifications' },
                     { href: '/account', label: 'Your account' },
+                    ...accountLinks,
                   ]
                 : []),
             ].map((l) => {
@@ -158,8 +234,8 @@ export function SiteHeader() {
                   aria-current={isActive(l.href) ? 'page' : undefined}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    'flex items-center justify-between rounded-xl px-3 py-3 font-semibold transition-colors',
-                    isActive(l.href) ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-secondary',
+                    'flex items-center justify-between rounded-xl px-3 py-3.5 text-sm font-semibold transition-colors',
+                    isActive(l.href) ? 'bg-brand-light-lime text-brand-deep' : 'text-foreground hover:bg-brand-cream',
                   )}
                 >
                   <span className="flex items-center gap-3">
@@ -178,8 +254,8 @@ export function SiteHeader() {
             )}
             {anonymous && (
               <li className="mt-2 grid grid-cols-2 gap-2">
-                <Button asChild variant="outline"><Link href="/login" onClick={() => setOpen(false)}>Sign in</Link></Button>
-                <Button asChild><Link href="/register" onClick={() => setOpen(false)}>Create account</Link></Button>
+                <Button asChild variant="outline" className="h-11 rounded-xl"><Link href="/login" onClick={() => setOpen(false)}>Sign in</Link></Button>
+                <Button asChild className="h-11 rounded-xl"><Link href="/register" onClick={() => setOpen(false)}>Join SAZU</Link></Button>
               </li>
             )}
           </ul>

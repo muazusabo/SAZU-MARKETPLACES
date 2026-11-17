@@ -19,7 +19,7 @@ export function EmptyState({
   suggestions?: StateAction[];
 }) {
   return (
-    <div className="rounded-lg border border-dashed bg-card p-10 text-center">
+    <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center shadow-sm sm:p-10">
       <PackageSearch aria-hidden className="mx-auto size-9 text-muted-foreground" />
       <h2 className="mt-3 text-xl font-bold">{title}</h2>
       <p className="mx-auto mt-1 max-w-md text-muted-foreground">{text}</p>
@@ -67,7 +67,7 @@ export function ErrorState({
   const router = useRouter();
   const copy = errorCopy(error, message);
   return (
-    <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-8 text-center">
+    <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/[0.03] p-8 text-center">
       {copy.permissionDenied ? <ShieldAlert aria-hidden className="mx-auto size-8 text-destructive" /> : <TriangleAlert aria-hidden className="mx-auto size-8 text-destructive" />}
       <h2 className="mt-3 font-semibold">{copy.title}</h2>
       <p className="mx-auto mt-1 max-w-lg text-sm text-muted-foreground">{copy.detail}</p>
@@ -86,7 +86,7 @@ export function ErrorState({
 
 export function PermissionDenied({ message = 'You don’t have permission to view this page.' }: { message?: string }) {
   return (
-    <div role="alert" className="rounded-lg border border-destructive/30 bg-card p-8 text-center">
+    <div role="alert" className="rounded-2xl border border-destructive/30 bg-card p-8 text-center">
       <ShieldAlert aria-hidden className="mx-auto size-9 text-destructive" />
       <h2 className="mt-3 text-xl font-bold">Access restricted</h2>
       <p className="mx-auto mt-1 max-w-lg text-muted-foreground">{message}</p>

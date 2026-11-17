@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from './api';
+import { ApiError, apiFetch, apiFetchBlob } from './api';
 
 /**
  * The short-lived access token lives only in memory (never localStorage), so XSS cannot read a
@@ -38,10 +38,18 @@ export const jsonBody = (method: string, body?: unknown): RequestInit => ({
 });
 
 /** Calls a protected endpoint, refreshing the access token once if it has expired. */
-export async function authedFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+type AuthenticatedRequestInit = RequestInit & { timeoutMs?: number };
+
+export async function authedFetch<T>(path: string, init: AuthenticatedRequestInit = {}): Promise<T> {
+  return authedRequest(() => apiFetch<T>(path, { ...init, headers: { ...(init.headers ?? {}), Authorization: `Bearer ${accessToken ?? ''}` } }));
+}
+
+export async function authedFetchBlob(path: string, init: AuthenticatedRequestInit = {}): Promise<Blob> {
+  return authedRequest(() => apiFetchBlob(path, { ...init, headers: { ...(init.headers ?? {}), Authorization: `Bearer ${accessToken ?? ''}` } }));
+}
+
+async function authedRequest<T>(run: () => Promise<T>): Promise<T> {
   if (!accessToken) await refreshAccessToken();
-  const run = () =>
-    apiFetch<T>(path, { ...init, headers: { ...(init.headers ?? {}), Authorization: `Bearer ${accessToken ?? ''}` } });
   try {
     return await run();
   } catch (e) {

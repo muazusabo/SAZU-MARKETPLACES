@@ -9,25 +9,23 @@ import { formatMessageTime } from '@/lib/format';
 import { AdminShell } from './admin-shell';
 
 const CARDS = [
-  { key: 'totalUsers', label: 'Registered users', href: '/admin/users', Icon: Users, tone: 'bg-sky-500/10 text-sky-700 dark:text-sky-300', detail: 'Marketplace community' },
-  { key: 'onlineVisitors', label: 'Online visitors', Icon: Radio, tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300', detail: 'Active in the last 2 minutes' },
-  { key: 'uniqueVisitors', label: 'Unique visitors', Icon: Eye, tone: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300', detail: 'Since visitor tracking began' },
-  { key: 'approvedSellers', label: 'Approved sellers', href: '/admin/sellers', Icon: Store, tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300', detail: 'Ready to sell' },
-  { key: 'pendingSellerApplications', label: 'Pending applications', href: '/admin/sellers', Icon: ClipboardList, tone: 'bg-amber-500/15 text-amber-800 dark:text-amber-300', detail: 'Seller decisions' },
+  { key: 'totalUsers', label: 'Registered users', href: '/admin/users', Icon: Users, tone: 'bg-primary/10 text-primary', detail: 'Marketplace community' },
+  { key: 'onlineVisitors', label: 'Online visitors', Icon: Radio, tone: 'bg-success/10 text-success', detail: 'Active in the last 2 minutes' },
+  { key: 'uniqueVisitors', label: 'Unique visitors', Icon: Eye, tone: 'bg-brand-light-lime text-brand-deep', detail: 'Since visitor tracking began' },
+  { key: 'approvedSellers', label: 'Approved sellers', href: '/admin/sellers', Icon: Store, tone: 'bg-success/10 text-success', detail: 'Ready to sell' },
+  { key: 'pendingSellerApplications', label: 'Pending applications', href: '/admin/sellers', Icon: ClipboardList, tone: 'bg-accent/30 text-foreground', detail: 'Seller decisions' },
   { key: 'activeListings', label: 'Active listings', href: '/admin/listings', Icon: Activity, tone: 'bg-primary/10 text-primary', detail: 'Available to students' },
-  { key: 'pendingListingReviews', label: 'Listings awaiting review', href: '/admin/listings', Icon: ClipboardList, tone: 'bg-violet-500/10 text-violet-700 dark:text-violet-300', detail: 'Moderation queue' },
-  { key: 'reportedProducts', label: 'Reported listings', href: '/admin/reports', Icon: Flag, tone: 'bg-rose-500/10 text-rose-700 dark:text-rose-300', detail: 'Needs attention' },
-  { key: 'openReports', label: 'Open abuse reports', href: '/admin/reports', Icon: AlertTriangle, tone: 'bg-orange-500/10 text-orange-700 dark:text-orange-300', detail: 'Safety follow-up' },
+  { key: 'pendingListingReviews', label: 'Listings awaiting review', href: '/admin/listings', Icon: ClipboardList, tone: 'bg-secondary text-secondary-foreground', detail: 'Moderation queue' },
+  { key: 'reportedProducts', label: 'Reported listings', href: '/admin/reports', Icon: Flag, tone: 'bg-destructive/10 text-destructive', detail: 'Needs attention' },
+  { key: 'openReports', label: 'Open abuse reports', href: '/admin/reports', Icon: AlertTriangle, tone: 'bg-destructive/10 text-destructive', detail: 'Safety follow-up' },
 ] as const;
 
 function Content() {
   const q = useQuery({ queryKey: ['admin-overview'], queryFn: adminApi.overview, refetchInterval: 30_000 });
   return (
     <div className="space-y-8">
-      <header className="admin-hero relative isolate overflow-hidden rounded-2xl bg-primary px-6 py-7 text-primary-foreground shadow-lg sm:px-8 sm:py-9">
-        <div aria-hidden className="admin-orbit pointer-events-none absolute -right-14 -top-28 size-72 rounded-full border-[28px] border-primary-foreground/10" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 right-24 size-52 rounded-full bg-accent/20 blur-3xl" />
-        <div className="relative max-w-2xl">
+      <header className="rounded-2xl bg-brand-navy px-6 py-7 text-white sm:px-8 sm:py-9">
+        <div className="max-w-2xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1 text-xs font-semibold tracking-wide">
             <span className="size-2 rounded-full bg-accent shadow-[0_0_12px_hsl(var(--accent))]" />
             MARKETPLACE CONTROL ROOM

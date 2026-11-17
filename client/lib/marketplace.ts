@@ -5,7 +5,7 @@ export interface ProductCardData {
   availability: string; status: string; campusLocation: string | null; publishedAt: string | null;
   reviewCount?: number; averageRating?: number;
   category: { slug: string; name: string };
-  seller: { slug: string; shopName: string; verified: boolean };
+  seller: { slug: string; shopName: string; avatarUrl: string | null; verified: boolean };
   image: { url: string; alt: string; fallbackUrl?: string | null } | null;
 }
 export interface ProductDetail {

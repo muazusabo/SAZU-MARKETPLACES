@@ -11,6 +11,7 @@ import { ConfirmButton } from '@/components/ui/confirm-button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/lib/api';
 import { formatNairaFromKobo } from '@/lib/format';
+import { useAuth } from '@/components/auth/auth-provider';
 import { OwnListingRow, sellerApi } from '@/lib/seller-api';
 import { SellerGate } from './seller-gate';
 import { ListingStatusBadge } from './status-badge';
@@ -48,23 +49,35 @@ function RowActions({ row }: { row: OwnListingRow }) {
 }
 
 function Content({ shopName, published, applicationSubmitted }: { shopName: string; published: boolean; applicationSubmitted: boolean }) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('all');
   const [page, setPage] = useState(1);
   const stats = useQuery({ queryKey: ['seller-dashboard'], queryFn: sellerApi.dashboard });
   const list = useQuery({ queryKey: ['seller-listings', tab, page], queryFn: () => sellerApi.list(tab, page) });
   const c = stats.data?.counts;
   const cards: [string, number | undefined][] = [
-    ['Unread messages', stats.data?.unreadMessages], ['Live', c?.active], ['In review', c?.pendingReview], ['Sold', c?.sold], ['Drafts', c?.draft], ['Rejected', c?.rejected], ['Archived', c?.archived], ['Views (30 days)', stats.data?.views30d],
+    ['Active listings', c?.active],
+    ['Product views (30 days)', stats.data?.views30d],
+    ['Unread messages', stats.data?.unreadMessages],
+    ['Products sold', c?.sold],
+    ['Awaiting review', c?.pendingReview],
   ];
   return (
-    <div className="container py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><p className="text-sm text-muted-foreground">Seller dashboard</p><h1 className="text-3xl font-bold">{shopName}</h1></div>
+    <div className="container max-w-7xl py-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-5 sm:p-7">
+        <div><p className="text-sm font-semibold text-primary">Seller workspace</p><h1 className="mt-1 text-2xl font-bold sm:text-3xl">{`Welcome${user?.profile.displayName ? `, ${user.profile.displayName}` : ''}`}</h1><p className="mt-1 text-muted-foreground">{shopName} · Manage listings and keep up with buyers.</p></div>
         <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:w-auto">
           <Button asChild variant="outline" className="min-h-11"><Link href="/dashboard/settings">Shop settings</Link></Button>
           <Button asChild className="min-h-11"><Link href="/dashboard/listings/new"><Plus />New listing</Link></Button>
         </div>
       </div>
+
+      <nav aria-label="Seller workspace" className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        <a href="#seller-listings" className="shrink-0 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary">My listings</a>
+        <Link href="/messages" className="shrink-0 rounded-md border bg-card px-3 py-2 text-sm font-semibold hover:bg-secondary">Messages</Link>
+        <Link href="/dashboard/settings" className="shrink-0 rounded-md border bg-card px-3 py-2 text-sm font-semibold hover:bg-secondary">Shop settings</Link>
+        <Link href="/account" className="shrink-0 rounded-md border bg-card px-3 py-2 text-sm font-semibold hover:bg-secondary">Profile</Link>
+      </nav>
 
       {published && (
         <div role="status" className="mt-5 rounded-xl border border-success/30 bg-success/5 p-5">
@@ -85,9 +98,9 @@ function Content({ shopName, published, applicationSubmitted }: { shopName: stri
       )}
 
       {stats.isError ? <div className="mt-6"><ErrorState message="We couldn’t load your numbers." error={stats.error} onRetry={() => { void stats.refetch(); }} /></div> : (
-        <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
+        <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
           {cards.map(([label, n]) => (
-            <div key={label} className="rounded-lg border bg-card p-4">
+            <div key={label} className="rounded-xl border bg-card p-4 sm:p-5">
               <dt className="text-xs font-semibold text-muted-foreground">{label === 'Unread messages' ? <Link href="/messages" className="hover:underline">{label}</Link> : label}</dt>
               <dd className="mt-1 text-2xl font-extrabold">{n === undefined ? <Skeleton className="h-7 w-10" /> : n}</dd>
             </div>
@@ -103,7 +116,7 @@ function Content({ shopName, published, applicationSubmitted }: { shopName: stri
         </section>
       )}
 
-      <section aria-labelledby="listings-h" className="mt-8">
+      <section id="seller-listings" aria-labelledby="listings-h" className="mt-8 scroll-mt-24">
         <h2 id="listings-h" className="text-xl font-bold">Your listings</h2>
         <div role="group" aria-label="Filter listings" className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           {TABS.map(([v, l]) => <Button key={v} size="sm" className="min-h-10 shrink-0" variant={tab === v ? 'default' : 'outline'} aria-pressed={tab === v} onClick={() => { setTab(v); setPage(1); }}>{l}</Button>)}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, apiFetch, apiFetchPage, unwrapEnvelope } from './api';
+import { ApiError, apiFetch, apiFetchBlob, apiFetchPage, unwrapEnvelope } from './api';
 
 const respond = (status: number, body: unknown) => vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: status < 400, status, json: async () => body }));
 afterEach(() => vi.unstubAllGlobals());
@@ -28,6 +28,22 @@ describe('apiFetch', () => {
   it('gives null for "nothing yet" responses, such as a user with no seller profile', async () => {
     respond(200, { data: null });
     expect(await apiFetch('/sellers/me')).toBeNull();
+  });
+
+  describe('apiFetchBlob', () => {
+    it('returns binary payloads without trying to parse JSON', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Blob(['private attachment']), {
+        status: 200, headers: { 'Content-Type': 'application/pdf' },
+      })));
+      await expect((await apiFetchBlob('/conversations/a/attachments/1')).text()).resolves.toBe('private attachment');
+    });
+
+    it('parses API errors from binary download responses', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'Not found' }), {
+        status: 404, headers: { 'Content-Type': 'application/json' },
+      })));
+      await expect(apiFetchBlob('/conversations/a/attachments/1')).rejects.toMatchObject({ status: 404, message: 'Not found' });
+    });
   });
   it('hands authenticated list calls the full { data, meta } shape the screens expect', async () => {
     respond(200, { data: [{ id: 1 }], meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 } });

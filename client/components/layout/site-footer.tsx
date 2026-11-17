@@ -12,22 +12,27 @@ const links = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative mt-24 overflow-hidden border-t-4 border-accent bg-primary text-primary-foreground">
-      <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 size-80 rounded-full border-[32px] border-primary-foreground/5" />
-      <div className="container relative grid gap-8 py-12 md:grid-cols-[1.2fr_1fr]">
+    <footer className="mt-0 border-t border-brand-deep bg-brand-deep text-white">
+      <div className="container grid gap-8 py-9 md:grid-cols-[1.1fr_1fr] md:items-center md:py-10">
         <div className="max-w-md">
-          <p className="font-display text-xl font-bold">{SITE.name}</p>
-          <p className="mt-1 text-sm text-primary-foreground/75">{SITE.tagline}</p>
-          <p className="mt-4 text-sm leading-relaxed text-primary-foreground/80">{SITE.paymentDisclaimer}</p>
+          <Link href="/" className="inline-flex items-center gap-2.5 rounded-sm focus-visible:ring-offset-brand-deep">
+            <span aria-hidden className="grid size-10 place-items-center rounded-xl bg-white font-display text-sm font-extrabold text-brand-deep">SZ</span>
+            <span className="leading-tight">
+              <span className="block font-display text-lg font-extrabold">SAZU</span>
+              <span className="block text-[10px] font-semibold tracking-[0.12em] text-white/75">MARKETPLACE</span>
+            </span>
+          </Link>
+          <p className="mt-3 text-sm text-white/75">{SITE.description}</p>
+          <p className="mt-2 text-xs leading-relaxed text-white/60">{SITE.paymentDisclaimer}</p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 content-start gap-x-6 gap-y-2 text-sm sm:grid-cols-3 md:justify-self-end">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="w-fit rounded-sm py-1 text-primary-foreground/85 transition-colors hover:text-accent hover:underline focus-visible:ring-offset-primary">{l.label}</Link>
+            <Link key={l.href} href={l.href} className="w-fit rounded-sm py-1 text-white/75 transition-colors hover:text-brand-lime hover:underline focus-visible:ring-offset-brand-deep">{l.label}</Link>
           ))}
         </nav>
       </div>
-      <div className="relative border-t border-primary-foreground/15 bg-foreground/10 py-4">
-        <p className="container text-xs leading-relaxed text-primary-foreground/70">
+      <div className="border-t border-white/10 bg-black/10 py-4">
+        <p className="container text-xs leading-relaxed text-white/60">
           SAZU Marketplace is an independent student marketplace and is not an official service of the university
           unless stated otherwise by the administrators.
         </p>

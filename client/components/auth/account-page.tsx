@@ -84,6 +84,54 @@ function VerifyBanner() {
   );
 }
 
+function StudentVerificationCard({ user }: { user: Me }) {
+  const { setUser } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const status = user.profile.studentVerificationStatus;
+  const statusLabel = status === 'pending' ? 'Awaiting review' : status === 'verified' ? 'Verified student' : status === 'rejected' ? 'Request declined' : 'Not verified';
+
+  async function requestVerification() {
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await authedFetch<Me>('/users/me/student-verification', jsonBody('POST'));
+      setUser(updated);
+      toast.success('Student verification request submitted.');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Could not submit your request. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section aria-labelledby="student-verification-title" className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 id="student-verification-title" className="font-bold">Student verification</h2>
+          <Badge variant={status === 'verified' ? 'success' : status === 'rejected' ? 'destructive' : status === 'pending' ? 'warning' : 'default'}>{statusLabel}</Badge>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {status === 'pending'
+            ? 'An administrator will review your request.'
+            : status === 'verified'
+              ? 'Your student status has been confirmed.'
+              : status === 'rejected'
+                ? 'You can submit another request for administrator review.'
+                : 'Request a student-status review from an administrator.'}
+        </p>
+        {error && <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>}
+      </div>
+      {(status === 'unverified' || status === 'rejected') && (
+        <Button type="button" onClick={requestVerification} disabled={busy} className="sm:justify-self-end">
+          {busy ? 'Submitting…' : status === 'rejected' ? 'Request another review' : 'Request verification'}
+        </Button>
+      )}
+    </section>
+  );
+}
+
 function DangerZone() {
   const router = useRouter();
   const { logout } = useAuth();
@@ -155,10 +203,8 @@ function AccountContent() {
 
   return (
     <div className="container mx-auto grid max-w-7xl gap-7 py-6 sm:gap-9 sm:py-10">
-      <section aria-labelledby="dashboard-title" className="relative isolate overflow-hidden rounded-[2rem] border border-primary/10 bg-gradient-to-br from-primary via-primary to-primary/85 p-5 text-primary-foreground shadow-xl shadow-primary/10 sm:p-8 lg:p-10">
-        <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 -z-10 size-72 rounded-full border-[44px] border-accent/15" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 size-64 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+      <section aria-labelledby="dashboard-title" className="rounded-2xl bg-brand-navy p-5 text-white sm:p-8 lg:p-9">
+        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/20 bg-white/10 text-2xl font-bold shadow-inner sm:size-[4.5rem]">
               {user.profile.avatarUrl
@@ -182,6 +228,7 @@ function AccountContent() {
       </section>
 
       <VerifyBanner />
+      <StudentVerificationCard user={user} />
 
       <section aria-label="Your marketplace activity" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <DashboardStat href="/messages" label="Conversations" value={conversations.data?.meta.total} Icon={MessageCircle} loading={conversations.isLoading} error={conversations.isError} tone="primary" />
@@ -400,7 +447,6 @@ function DashboardStat({
   }[tone];
   return (
     <Link href={href} className="group relative overflow-hidden rounded-2xl border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-5">
-      <span aria-hidden className={`pointer-events-none absolute -right-8 -top-8 size-24 rounded-full opacity-50 ${toneClass}`} />
       <div className="flex items-start justify-between gap-3">
         <span className={`relative grid size-11 place-items-center rounded-xl ${toneClass}`}><Icon aria-hidden className="size-5" /></span>
         <ChevronRight aria-hidden className="relative size-4 text-muted-foreground transition-transform group-hover:translate-x-1" />

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { ApiError } from '@/lib/api';
+import { postAuthPathForUser } from '@/lib/auth-routing';
 import { LoginValues, loginSchema, safeNextPath } from '@/lib/validation';
 import { AuthShell, FormError } from './auth-shell';
 import { useAuth } from './auth-provider';
@@ -18,14 +19,15 @@ export function LoginForm() {
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
-  const next = safeNextPath(params.get('next'));
+  const requestedNext = params.get('next');
+  const next = safeNextPath(requestedNext);
 
   async function onSubmit(v: LoginValues) {
     setError(null);
     try {
       const me = await login(v.email, v.password);
       toast.success(`Welcome back, ${me.profile.displayName}.`);
-      router.replace(next);
+      router.replace(postAuthPathForUser(me, requestedNext));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Could not sign in. Try again.');
     }

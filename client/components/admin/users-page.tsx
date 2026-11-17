@@ -15,8 +15,8 @@ import { HistoryList, Pager, ReasonAction, errMsg } from './admin-ui';
 
 function Content() {
   const [text, setText] = useState(''); const [q, setQ] = useState('');
-  const [status, setStatus] = useState(''); const [role, setRole] = useState(''); const [page, setPage] = useState(1);
-  const list = useQuery({ queryKey: ['admin-users', q, status, role, page], queryFn: () => adminApi.users(q, status, role, page) });
+  const [status, setStatus] = useState(''); const [role, setRole] = useState(''); const [studentVerification, setStudentVerification] = useState(''); const [page, setPage] = useState(1);
+  const list = useQuery({ queryKey: ['admin-users', q, status, role, studentVerification, page], queryFn: () => adminApi.users(q, status, role, page, studentVerification) });
   const sel = 'h-10 rounded-md border border-input bg-card px-2 text-sm';
   return (
     <div>
@@ -25,6 +25,7 @@ function Content() {
         <label className="grid gap-1 text-sm font-semibold">Search<Input value={text} maxLength={100} onChange={(e) => setText(e.target.value)} placeholder="Email or name" className="w-60" /></label>
         <label className="grid gap-1 text-sm font-semibold">Status<select className={sel} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="">All</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="deactivated">Deactivated</option><option value="deleted">Deleted</option></select></label>
         <label className="grid gap-1 text-sm font-semibold">Role<select className={sel} value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}><option value="">Any</option><option value="seller">Seller</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select></label>
+        <label className="grid gap-1 text-sm font-semibold">Student verification<select className={sel} value={studentVerification} onChange={(e) => { setStudentVerification(e.target.value); setPage(1); }}><option value="">Any</option><option value="unverified">Not verified</option><option value="pending">Awaiting review</option><option value="verified">Verified</option><option value="rejected">Declined</option></select></label>
         <Button type="submit">Search</Button>
       </form>
       <div className="mt-4">
@@ -34,7 +35,7 @@ function Content() {
           : <><ul className="divide-y rounded-lg border bg-card">{list.data.data.map((u) => (
               <li key={u.id}><Link href={`/admin/users/${u.id}`} className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-secondary">
                 <span className="min-w-0"><span className="block truncate font-semibold">{u.displayName}</span><span className="block truncate text-sm text-muted-foreground">{u.email}</span></span>
-                <span className="flex flex-wrap gap-1.5"><Badge variant={u.status === 'active' ? 'success' : 'destructive'}>{u.status}</Badge>{u.roles.filter((r) => r !== 'user').map((r) => <Badge key={r}>{r}</Badge>)}</span>
+                <span className="flex flex-wrap gap-1.5"><Badge variant={u.status === 'active' ? 'success' : 'destructive'}>{u.status}</Badge><Badge variant={u.studentVerification === 'verified' ? 'success' : u.studentVerification === 'pending' ? 'warning' : 'default'}>Student: {u.studentVerification}</Badge>{u.roles.filter((r) => r !== 'user').map((r) => <Badge key={r}>{r}</Badge>)}</span>
               </Link></li>))}</ul><Pager meta={list.data.meta} onPage={setPage} /></>}
       </div>
     </div>
@@ -68,7 +69,7 @@ function Detail({ id }: { id: string }) {
         <div><dt className="font-semibold">Seller</dt><dd className="text-muted-foreground">{u.seller ? `${u.seller.shopName} (${u.seller.status}), ${u.seller.listings} listings` : 'Not a seller'}</dd></div>
         <div><dt className="font-semibold">Reports</dt><dd className="text-muted-foreground">{u.activity.reportsFiled} filed · {u.activity.reportsAgainst} against</dd></div>
       </dl>
-      <p className="text-xs text-muted-foreground">Student verification here records an administrator’s own decision. No evidence-upload flow exists yet and no verification rule is assumed.</p>
+      <p className="text-xs text-muted-foreground">Users can request student verification from their dashboard. Review records an administrator’s decision; evidence upload is not currently supported.</p>
       <div className="flex flex-wrap items-start gap-2">
         {isAdminUser ? <p className="text-sm text-muted-foreground">Administrator accounts can’t be suspended here. Change roles with the server-side CLI.</p>
           : u.status === 'suspended' ? <ReasonAction label="Reactivate" variant="default" required={false} onSubmit={(note) => run(() => adminApi.setUserStatus(id, 'active', note || undefined), 'Account reactivated.')} />

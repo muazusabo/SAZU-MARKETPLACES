@@ -1,127 +1,145 @@
 import Link from 'next/link';
-import { ArrowRight, MessageCircle, ShieldCheck, Store, Search, HandCoins, Package } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, Armchair, BookOpen, BedDouble, Gamepad2, Handshake, MessageCircle, Search, Shirt, Smartphone, UtensilsCrossed, Wrench } from 'lucide-react';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { HomeListings } from '@/components/home/home-listings';
+import { SearchForm } from '@/components/home/search-form';
 import { GridSkeleton } from '@/components/marketplace/product-grid';
 import { fetchCategories } from '@/lib/marketplace';
-import { SearchForm } from '@/components/home/search-form';
-import { CATEGORIES, SITE } from '@/lib/site';
 
-// Rendered on demand (listing fetches are still cached ~30s) so a build never bakes in an empty/error state.
 export const dynamic = 'force-dynamic';
 
+const HOME_CATEGORIES = [
+  { slug: 'electronics', name: 'Electronics', Icon: Smartphone },
+  { slug: 'food-drinks', name: 'Food & Drinks', Icon: UtensilsCrossed },
+  { slug: 'books-study-materials', name: 'Books & Study Materials', Icon: BookOpen },
+  { slug: 'fashion-accessories', name: 'Fashion & Beauty', Icon: Shirt },
+  { slug: 'hostel-room-essentials', name: 'Hostel Essentials', Icon: BedDouble },
+  { slug: 'furniture', name: 'Furniture', Icon: Armchair },
+  { slug: 'sports-gaming', name: 'Sports & Gaming', Icon: Gamepad2 },
+  { slug: 'student-services', name: 'Student Services', Icon: Wrench },
+] as const;
+
+const STEPS = [
+  { Icon: Search, title: 'Discover Products', text: 'Browse through amazing student listings.' },
+  { Icon: MessageCircle, title: 'Contact the Seller', text: 'Chat directly with the seller.' },
+  { Icon: Handshake, title: 'Agree & Collect', text: 'Settle and get your item.' },
+] as const;
+
 export default async function HomePage() {
-  // Categories come from the database (administrator-managed); fall back to the brief's list if the API is unreachable.
-  const fromApi = await fetchCategories().catch(() => null);
-  const categories = fromApi
-    ? fromApi.map((c) => ({ slug: c.slug, name: c.name, icon: CATEGORIES.find((x) => x.slug === c.slug)?.icon ?? Package }))
-    : CATEGORIES;
+  const categories = await fetchCategories().catch(() => null);
+  const availableCategories = new Set(categories?.map((category) => category.slug) ?? []);
+  const visibleCategories = HOME_CATEGORIES.filter(({ slug }) => !categories || availableCategories.has(slug));
+
   return (
-    <>
-      <section className="bg-primary text-primary-foreground">
-        <div className="container flex flex-col items-center py-12 text-center sm:py-16">
-          <p className="rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-4 py-1.5 text-sm font-semibold">
-            {SITE.tagline}
-          </p>
-          <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-            Find it on campus. Sell it on SAZU.
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-primary-foreground/85 sm:text-lg">
-            Discover student listings, find campus essentials, and connect directly with sellers at Sa&apos;adu Zungur University.
-          </p>
-          <div className="mt-7 w-full max-w-3xl"><SearchForm /></div>
-          <p className="mt-3 max-w-2xl text-sm text-primary-foreground/75">
-            No online payments. Buyers and sellers arrange payment, collection, and delivery directly.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {categories.slice(0, 5).map(({ slug, name }) => (
-              <Link
-                key={slug}
-                href={`/browse?category=${slug}`}
-                className="rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary-foreground/20"
-              >
-                {name}
-              </Link>
+    <div className="pb-12">
+      <section className="container pt-5 sm:pt-7">
+        <div className="grid overflow-hidden rounded-3xl border border-border bg-brand-cream lg:min-h-[380px] lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="flex flex-col justify-center px-5 py-8 sm:px-9 sm:py-10 lg:px-11">
+            <p className="w-fit rounded-full bg-brand-light-lime px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-deep">
+              SAZU campus marketplace
+            </p>
+            <h1 className="mt-4 max-w-xl font-display text-[2.4rem] font-extrabold leading-[1.04] tracking-tight text-foreground sm:text-5xl">
+              Buy. Sell. Connect.
+              <span className="block text-primary">On Campus.</span>
+            </h1>
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Discover great products, find services, and connect with fellow students at SAZU.
+            </p>
+            <div className="mt-5">
+              <SearchForm />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Button asChild size="sm" className="h-10 rounded-full px-5">
+                <Link href="/browse">Browse Products <ArrowRight aria-hidden /></Link>
+              </Button>
+              <Button asChild variant="accent" size="sm" className="h-10 rounded-full px-5">
+                <Link href="/sell">Sell on SAZU</Link>
+              </Button>
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+              No online payments. Buyers and sellers arrange payment and collection directly.
+            </p>
+          </div>
+          <div className="relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:m-3 lg:ml-0 lg:rounded-2xl">
+            <Image
+              src="/campus-scene.svg"
+              alt="Illustration of a student with books in front of a university campus"
+              fill
+              priority
+              sizes="(max-width: 1023px) 100vw, 55vw"
+              className="object-cover object-center"
+            />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-brand-deep/55 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 rounded-2xl border border-white/60 bg-white/95 px-4 py-3 shadow-lg sm:bottom-6 sm:left-6">
+              <p className="text-sm font-bold text-brand-deep">Made for campus life</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Find what you need, right here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="categories-heading" className="container mt-7 sm:mt-9">
+        <div className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-9 place-items-center rounded-xl bg-brand-light-lime text-brand-deep">
+                <BookOpen aria-hidden className="size-5" />
+              </span>
+              <h2 id="categories-heading" className="font-display text-xl font-bold sm:text-2xl">Popular Categories</h2>
+            </div>
+            <Link href="/categories" className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-primary hover:underline">
+              View all <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </div>
+          <ul className="-mx-1 flex snap-x gap-2.5 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible lg:grid-cols-8">
+            {visibleCategories.map(({ slug, name, Icon }, index) => (
+              <li key={slug} className="w-[132px] shrink-0 snap-start sm:w-auto">
+                <Link
+                  href={`/browse?category=${slug}`}
+                  className="group flex h-[112px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-2 text-center transition-colors hover:border-primary/30 hover:bg-brand-light-lime/60 focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className={`grid size-11 place-items-center rounded-xl ${index % 2 === 0 ? 'bg-brand-light-lime' : 'bg-white'} text-brand-deep transition-transform group-hover:-translate-y-0.5`}>
+                    <Icon aria-hidden className="size-6" />
+                  </span>
+                  <span className="line-clamp-2 text-xs font-bold leading-tight text-foreground sm:text-[11px] xl:text-xs">{name}</span>
+                </Link>
+              </li>
             ))}
-          </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button asChild variant="accent" size="lg"><Link href="/browse">Browse products</Link></Button>
-            <Button asChild size="lg" className="border border-primary-foreground/40 bg-transparent hover:bg-primary-foreground/10">
-              <Link href="/sell">Sell on SAZU</Link>
-            </Button>
-          </div>
+          </ul>
         </div>
       </section>
 
-      <section aria-labelledby="categories-heading" className="container mt-14">
-        <div className="mb-5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">Explore the marketplace</p>
-          <h2 id="categories-heading" className="mt-1 text-2xl font-bold sm:text-3xl">Shop by category</h2>
-        </div>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {categories.map(({ slug, name, icon: Icon }) => (
-            <li key={slug}>
-              <Link
-                href={`/browse?category=${slug}`}
-                className="flex h-full items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:border-primary hover:bg-secondary sm:p-4"
-              >
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-primary sm:size-10">
-                  <Icon aria-hidden className="size-4 sm:size-5" />
-                </span>
-                <span className="text-sm font-semibold leading-snug sm:text-base">{name}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <Suspense fallback={<div className="container mt-16"><GridSkeleton count={4} /></div>}>
+      <Suspense fallback={<div className="container mt-8"><GridSkeleton count={4} /></div>}>
         <HomeListings />
       </Suspense>
 
-      <section aria-labelledby="how-heading" className="container mt-20">
-        <h2 id="how-heading" className="text-2xl font-bold sm:text-3xl">How SAZU Marketplace works</h2>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            { Icon: Search, title: 'Find what you need', text: 'Search or browse listings from student sellers. Product pages are open to everyone, no account needed.' },
-            { Icon: MessageCircle, title: 'Message the seller', text: 'Sign in and chat privately inside the app. Your phone number stays private unless you choose to share it.' },
-            { Icon: HandCoins, title: 'Agree and meet', text: 'You and the seller settle payment, collection, or delivery directly. SAZU Marketplace never handles money.' },
-          ].map(({ Icon, title, text }, i) => (
-            <li key={title} className="rounded-lg border bg-card p-5">
-              <Icon aria-hidden className="size-6 text-primary" />
-              <h3 className="mt-3 text-lg font-bold">{i + 1}. {title}</h3>
-              <p className="mt-1 text-muted-foreground">{text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section aria-labelledby="sell-heading" className="container mt-20 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg bg-secondary p-6 sm:p-8">
-          <Store aria-hidden className="size-7 text-primary" />
-          <h2 id="sell-heading" className="mt-3 text-2xl font-bold">Become a seller</h2>
-          <p className="mt-2 text-secondary-foreground/80">
-            Create an account, apply for a seller profile with your shop name and categories, and list products or
-            services once approved. Review requirements are set by the marketplace administrators.
-          </p>
-          <Button asChild className="mt-5"><Link href="/sell">How selling works <ArrowRight /></Link></Button>
-        </div>
-        <div className="rounded-lg border bg-card p-6 sm:p-8">
-          <ShieldCheck aria-hidden className="size-7 text-success" />
-          <h2 className="mt-3 text-2xl font-bold">Community safety</h2>
-          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-muted-foreground">
-            <li>Meet in busy, public parts of campus.</li>
-            <li>Check the item before you pay.</li>
-            <li>Keep conversations inside the app so reports can be reviewed.</li>
-            <li>Report suspicious listings or sellers. Stolen, counterfeit and exam-leak items are not allowed.</li>
-          </ul>
-          <Link href="/safety" className="mt-4 inline-block font-semibold text-primary underline-offset-4 hover:underline">
-            Read the safety guidelines
-          </Link>
+      <section aria-labelledby="how-heading" className="container mt-7 sm:mt-9">
+        <div className="rounded-3xl border border-brand-light-lime bg-brand-cream px-5 py-5 sm:px-7">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 id="how-heading" className="font-display text-xl font-extrabold sm:text-2xl">How It Works</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Get started in three simple steps.</p>
+            </div>
+            <p className="max-w-xl text-xs leading-relaxed text-muted-foreground sm:text-right">
+              Buyers and sellers connect directly to agree on payment and collection. SAZU Marketplace does not process payments.
+            </p>
+          </div>
+          <ol className="grid gap-4 md:grid-cols-3 md:gap-0">
+            {STEPS.map(({ Icon, title, text }, index) => (
+              <li key={title} className={`flex items-center gap-3 sm:px-4 md:py-1 ${index > 0 ? 'md:border-l md:border-brand-deep/15' : ''}`}>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-deep font-display text-sm font-bold text-white">{index + 1}</span>
+                <Icon aria-hidden className="size-6 shrink-0 text-brand-deep" />
+                <span>
+                  <span className="block text-sm font-extrabold">{title}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
-
-    </>
+    </div>
   );
 }

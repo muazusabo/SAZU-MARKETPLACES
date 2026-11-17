@@ -4,49 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette: forest green, muted gold, and warm paper inspired by the visual reference. */
 @layer base {
   :root {
-    --background: 120 20% 98%;
-    --foreground: 137 30% 15%;
+    --background: 60 33% 97%;
+    --foreground: 140 24% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 137 30% 15%;
-    --primary: 138 40% 22%;
-    --primary-foreground: 44 62% 85%;
-    --secondary: 120 17% 94%;
-    --secondary-foreground: 138 40% 22%;
-    --accent: 39 50% 55%;
-    --accent-foreground: 137 30% 15%;
-    --muted: 120 17% 94%;
-    --muted-foreground: 137 10% 38%;
-    --destructive: 0 70% 42%;
+    --card-foreground: 140 24% 12%;
+    --primary: 164 86% 16%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 79 63% 88%;
+    --secondary-foreground: 163 90% 13%;
+    --accent: 80 82% 68%;
+    --accent-foreground: 140 24% 12%;
+    --muted: 69 35% 95%;
+    --muted-foreground: 150 6% 47%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --success: 145 45% 28%;
+    --success: 164 86% 16%;
     --success-foreground: 0 0% 100%;
-    --border: 130 12% 86%;
-    --input: 130 12% 78%;
-    --ring: 138 40% 32%;
+    --border: 100 17% 90%;
+    --input: 100 17% 82%;
+    --ring: 164 86% 16%;
   }
   .dark {
-    --background: 145 20% 8%;
-    --foreground: 120 18% 95%;
-    --card: 145 20% 11%;
-    --card-foreground: 120 18% 95%;
-    --primary: 39 50% 55%;
-    --primary-foreground: 137 30% 15%;
-    --secondary: 145 18% 17%;
-    --secondary-foreground: 120 18% 95%;
-    --accent: 39 50% 55%;
-    --accent-foreground: 137 30% 15%;
-    --muted: 145 18% 15%;
-    --muted-foreground: 120 12% 70%;
+    --background: 163 48% 8%;
+    --foreground: 60 33% 97%;
+    --card: 163 38% 11%;
+    --card-foreground: 60 33% 97%;
+    --primary: 164 64% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 163 34% 17%;
+    --secondary-foreground: 60 33% 97%;
+    --accent: 80 72% 55%;
+    --accent-foreground: 140 24% 12%;
+    --muted: 163 34% 17%;
+    --muted-foreground: 150 10% 66%;
     --destructive: 0 72% 62%;
-    --destructive-foreground: 145 20% 8%;
-    --success: 145 45% 48%;
-    --success-foreground: 145 20% 8%;
-    --border: 145 15% 23%;
-    --input: 145 15% 28%;
-    --ring: 39 50% 55%;
+    --destructive-foreground: 163 48% 8%;
+    --success: 164 64% 46%;
+    --success-foreground: 163 48% 8%;
+    --border: 163 24% 25%;
+    --input: 163 24% 31%;
+    --ring: 164 64% 42%;
   }
   * { @apply border-border; }
   html { scroll-padding-top: 5rem; }
@@ -57,16 +56,11 @@
     from { opacity: 0; transform: translateY(0.75rem); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes admin-orbit {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
   @keyframes network-progress {
     from { transform: translateX(-120%); }
     to { transform: translateX(340%); }
   }
   .admin-metric-card { animation: admin-card-enter 450ms both; }
-  .admin-orbit { animation: admin-orbit 36s linear infinite; }
   .network-progress { animation: network-progress 1.6s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

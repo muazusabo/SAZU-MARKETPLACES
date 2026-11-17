@@ -10,7 +10,7 @@ import type { CategoryNode } from '@/lib/marketplace';
 import { AVAILABILITY_LABELS, CONDITION_LABELS } from '@/lib/labels';
 import { cn } from '@/lib/utils';
 
-const selectClass = 'h-10 w-full rounded-md border border-input bg-card px-3 text-sm';
+const selectClass = 'h-10 w-full rounded-xl border border-input bg-card px-3 text-sm';
 
 export function BrowseFilters({ initial, categories }: { initial: BrowseParams; categories: CategoryNode[] }) {
   const router = useRouter();

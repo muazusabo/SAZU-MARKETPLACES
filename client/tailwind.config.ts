@@ -12,6 +12,16 @@ const config: Config = {
         display: ['"Bricolage Grotesque Variable"', '"Figtree Variable"', 'ui-sans-serif', 'sans-serif'],
       },
       colors: {
+        brand: {
+          navy: '#064E3B',
+          deep: '#033D2E',
+          teal: '#064E3B',
+          'teal-hover': '#033D2E',
+          amber: '#C8F169',
+          lime: '#C8F169',
+          'light-lime': '#EAF5CE',
+          cream: '#F5F6ED',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

@@ -1,5 +1,5 @@
 import { PageMeta } from './api';
-import { authedFetch, jsonBody } from './auth-client';
+import { authedFetch, authedFetchBlob, jsonBody } from './auth-client';
 
 export type ListingState = 'available' | 'reserved' | 'sold' | 'unavailable' | 'removed';
 
@@ -14,7 +14,7 @@ export interface ConversationSummary {
   lastMessage: { body: string; mine: boolean; createdAt: string } | null;
   unreadCount: number; blockedByMe: boolean; canSend: boolean;
 }
-export interface ChatMessage { id: string; mine: boolean; body: string; createdAt: string; read?: boolean | null }
+export interface ChatMessage { id: string; mine: boolean; body: string; createdAt: string; read?: boolean | null; attachment?: { fileName: string; contentType: string; size: number } | null }
 export interface AppNotification { id: string; type: string; title: string; body: string | null; link: string | null; data: Record<string, unknown>; read: boolean; createdAt: string }
 export interface MessagePage { data: ChatMessage[]; meta: { hasMore: boolean; nextBefore: string | null } }
 
@@ -30,6 +30,13 @@ export const buyerApi = {
   conversation: (id: string) => authedFetch<ConversationSummary>(`/conversations/${id}`),
   messages: (id: string, before?: string) => authedFetch<MessagePage>(`/conversations/${id}/messages?limit=30${before ? `&before=${before}` : ''}`),
   send: (id: string, body: string) => authedFetch<ChatMessage>(`/conversations/${id}/messages`, jsonBody('POST', { body })),
+  sendAttachment: (id: string, file: File, body: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('body', body);
+    return authedFetch<ChatMessage>(`/conversations/${id}/attachments`, { method: 'POST', body: form, timeoutMs: 30_000 });
+  },
+  attachment: (id: string, messageId: string) => authedFetchBlob(`/conversations/${id}/attachments/${messageId}`, { timeoutMs: 30_000 }),
   markRead: (id: string) => authedFetch<{ unreadMessages: number }>(`/conversations/${id}/read`, jsonBody('POST')),
   block: (id: string) => authedFetch<null>(`/conversations/${id}/block`, jsonBody('POST')),
   unblock: (id: string) => authedFetch<null>(`/conversations/${id}/block`, jsonBody('DELETE')),

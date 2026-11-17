@@ -47,7 +47,11 @@ export async function apiFetch<T>(path: string, init: RequestInit & { timeoutMs?
   return request<T>(path, init, true);
 }
 
-async function request<T>(path: string, init: RequestInit & { timeoutMs?: number }, unwrap: boolean): Promise<T> {
+export async function apiFetchBlob(path: string, init: RequestInit & { timeoutMs?: number } = {}): Promise<Blob> {
+  return request<Blob>(path, init, false, 'blob');
+}
+
+async function request<T>(path: string, init: RequestInit & { timeoutMs?: number }, unwrap: boolean, output: 'json' | 'blob' = 'json'): Promise<T> {
   const { timeoutMs = 8000, ...rest } = init;
   const controller = new AbortController();
   const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -63,11 +67,15 @@ async function request<T>(path: string, init: RequestInit & { timeoutMs?: number
       signal: controller.signal,
       headers: { Accept: 'application/json', ...serverOnlyHeaders(), ...(rest.headers ?? {}) },
     });
-    const body = await res.json().catch(() => null);
+    const body = output === 'blob' ? await res.blob() : await res.json().catch(() => null);
     if (!res.ok) {
-      const msg = Array.isArray(body?.message) ? body.message.join(', ') : body?.message;
-      throw new ApiError(res.status, msg ?? 'The request could not be completed.', body?.requestId);
+      const errorBody = output === 'blob'
+        ? await (body as Blob).text().then((text) => JSON.parse(text) as { message?: string | string[]; requestId?: string }).catch(() => null)
+        : body as { message?: string | string[]; requestId?: string } | null;
+      const msg = Array.isArray(errorBody?.message) ? errorBody.message.join(', ') : errorBody?.message;
+      throw new ApiError(res.status, msg ?? 'The request could not be completed.', errorBody?.requestId);
     }
+    if (output === 'blob') return body as T;
     return (unwrap ? unwrapEnvelope(body) : body) as T;
   } catch (err) {
     if (err instanceof ApiError) throw err;

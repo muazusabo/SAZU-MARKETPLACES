@@ -61,7 +61,7 @@ export const adminApi = {
   report: (id: string) => authedFetch<AdminReport>(`/admin/reports/${id}`),
   updateReport: (id: string, status: string, note?: string) => authedFetch<AdminReport>(`/admin/reports/${id}`, jsonBody('PATCH', { status, note })),
 
-  users: (q: string, status: string, role: string, page: number) => authedFetch<Paged<AdminUserRow>>(`/admin/users${qs({ q, status, role, page, pageSize: 15 })}`),
+  users: (q: string, status: string, role: string, page: number, studentVerification = '') => authedFetch<Paged<AdminUserRow>>(`/admin/users${qs({ q, status, role, studentVerification, page, pageSize: 15 })}`),
   user: (id: string) => authedFetch<AdminUser>(`/admin/users/${id}`),
   setUserStatus: (id: string, status: string, reason?: string) => authedFetch<AdminUser>(`/admin/users/${id}/status`, jsonBody('PATCH', { status, reason })),
   grantModerator: (id: string) => authedFetch<AdminUser>(`/admin/users/${id}/roles`, jsonBody('POST', { role: 'moderator' })),

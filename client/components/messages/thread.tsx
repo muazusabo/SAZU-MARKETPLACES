@@ -1,16 +1,18 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Ban, ImageOff, Info, Send } from 'lucide-react';
+import { ArrowLeft, Ban, ImageOff, Info, Paperclip, PhoneCall, Send, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { useAuth } from '@/components/auth/auth-provider';
 import { useRealtime } from '@/components/realtime/realtime-provider';
 import { ReportButton } from '@/components/reports/report-button';
 import { ConfirmButton } from '@/components/ui/confirm-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/marketplace/states';
+import { MessageAttachment } from '@/components/messages/message-attachment';
 import { ApiError } from '@/lib/api';
 import { ChatMessage, ListingState, buyerApi } from '@/lib/buyer-api';
 import { formatMessageTime, formatNairaFromKobo } from '@/lib/format';
@@ -25,7 +27,8 @@ const NOTICE: Partial<Record<ListingState, string>> = {
 
 function Content({ id }: { id: string }) {
   const qc = useQueryClient();
-  const { connected, refreshCounts } = useRealtime();
+  const { user } = useAuth();
+  const { connected, refreshCounts, startVoiceCall, voiceCall } = useRealtime();
   // New messages arrive over the WebSocket; polling only runs fast when the socket is down.
   const conv = useQuery({ queryKey: ['conversation', id], queryFn: () => buyerApi.conversation(id), refetchInterval: connected ? 60_000 : 15_000 });
   const latest = useQuery({ queryKey: ['messages', id], queryFn: () => buyerApi.messages(id), refetchInterval: connected ? 30_000 : 4_000, enabled: conv.isSuccess });
@@ -34,6 +37,8 @@ function Content({ id }: { id: string }) {
   const [cursor, setCursor] = useState<string | null | undefined>(undefined);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [text, setText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
 
@@ -76,14 +81,22 @@ function Content({ id }: { id: string }) {
   }
 
   const send = useMutation({
-    mutationFn: (body: string) => buyerApi.send(id, body),
-    onSuccess: async () => { setText(''); stick.current = true; await Promise.all([qc.invalidateQueries({ queryKey: ['messages', id] }), qc.invalidateQueries({ queryKey: ['conversations'] })]); },
+    mutationFn: ({ body, file }: { body: string; file: File | null }) => file ? buyerApi.sendAttachment(id, file, body) : buyerApi.send(id, body),
+    onSuccess: async () => { setText(''); setSelectedFile(null); stick.current = true; await Promise.all([qc.invalidateQueries({ queryKey: ['messages', id] }), qc.invalidateQueries({ queryKey: ['conversations'] })]); },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Message not sent. Try again.'),
   });
   function submit() {
-    const r = checkMessage(text);
-    if (!r.ok) return void toast.error(r.error);
-    send.mutate(r.body);
+    const body = text.trim();
+    if (!body && !selectedFile) return;
+    if (selectedFile && selectedFile.size > 10 * 1024 * 1024) return void toast.error('Attachments can be at most 10 MB.');
+    if (selectedFile?.type && !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(selectedFile.type)) return void toast.error('Attach a JPEG, PNG, WebP image or PDF document.');
+    if (body) {
+      const r = checkMessage(body);
+      if (!r.ok) return void toast.error(r.error);
+      send.mutate({ body: r.body, file: selectedFile });
+      return;
+    }
+    send.mutate({ body: '', file: selectedFile });
   }
 
   if (conv.isLoading) return <div className="container max-w-3xl py-8" role="status" aria-label="Loading conversation"><Skeleton className="h-20" /><Skeleton className="mt-4 h-72" /></div>;
@@ -105,6 +118,9 @@ function Content({ id }: { id: string }) {
       </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-1 pl-1">
+        <Button type="button" size="sm" variant="outline" disabled={!connected || !c.canSend || !!voiceCall || !user?.emailVerified} title={!user?.emailVerified ? 'Confirm your email to start voice calls.' : undefined} onClick={() => { void startVoiceCall(id, c.counterpart.name); }}>
+          <PhoneCall aria-hidden className="size-4" />Voice call
+        </Button>
         <ConfirmButton size="sm" variant="ghost" className="text-muted-foreground" confirmLabel={c.blockedByMe ? 'Unblock?' : 'Block this person?'} disabled={blockMutation.isPending} onConfirm={() => blockMutation.mutate(!c.blockedByMe)}>
           <Ban />{c.blockedByMe ? 'Unblock' : 'Block'}
         </ConfirmButton>
@@ -136,7 +152,8 @@ function Content({ id }: { id: string }) {
               {messages.map((m) => (
                 <li key={m.id} className={cn('flex', m.mine ? 'justify-end' : 'justify-start')}>
                   <div className={cn('max-w-[85%] rounded-2xl px-3 py-2', m.mine ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm border bg-card')}>
-                    <p className="whitespace-pre-wrap break-words text-sm">{m.body}</p>
+                    {m.body && <p className="whitespace-pre-wrap break-words text-sm">{m.body}</p>}
+                    {m.attachment && <MessageAttachment conversationId={id} messageId={m.id} fileName={m.attachment.fileName} contentType={m.attachment.contentType} />}
                     <p className={cn('mt-1 text-right text-[11px]', m.mine ? 'text-primary-foreground/70' : 'text-muted-foreground')}>{formatMessageTime(m.createdAt)}{m.id === lastSeenId ? ' · Seen' : ''}</p>
                   </div>
                 </li>
@@ -150,12 +167,15 @@ function Content({ id }: { id: string }) {
           {c.blockedByMe ? 'You’ve blocked this person. Unblock them to send messages.' : 'You can’t send messages in this conversation.'}</p>
       )}
       <form onSubmit={(e) => { e.preventDefault(); submit(); }} className={cn('mt-3 grid gap-2', !c.canSend && 'hidden')}>
+        <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" aria-label="Choose an image or PDF attachment" onChange={(e) => { setSelectedFile(e.target.files?.[0] ?? null); e.target.value = ''; }} />
+        {selectedFile && <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm"><span className="min-w-0 truncate">{selectedFile.name} · {(selectedFile.size / 1024 / 1024).toFixed(1)} MB</span><Button type="button" size="icon" variant="ghost" aria-label="Remove attachment" onClick={() => setSelectedFile(null)}><X /></Button></div>}
         <label htmlFor="msg" className="sr-only">Message</label>
         <div className="flex items-end gap-2">
           <textarea id="msg" rows={2} maxLength={MESSAGE_MAX} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message…"
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
             className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-input bg-card px-3 py-2 text-base sm:text-sm" />
-          <Button type="submit" size="lg" className="size-11 shrink-0 rounded-xl px-0 sm:h-11 sm:w-auto sm:px-4" disabled={send.isPending || !text.trim()} aria-label="Send message"><Send /><span className="hidden sm:inline">{send.isPending ? 'Sending…' : 'Send'}</span></Button>
+          <Button type="button" size="lg" variant="outline" className="size-11 shrink-0 rounded-xl px-0" disabled={send.isPending} aria-label="Attach image or PDF" onClick={() => fileInput.current?.click()}><Paperclip /></Button>
+          <Button type="submit" size="lg" className="size-11 shrink-0 rounded-xl px-0 sm:h-11 sm:w-auto sm:px-4" disabled={send.isPending || (!text.trim() && !selectedFile)} aria-label="Send message"><Send /><span className="hidden sm:inline">{send.isPending ? 'Sending…' : 'Send'}</span></Button>
         </div>
         {text.length > MESSAGE_MAX - 200 && <p className="text-xs text-muted-foreground" aria-live="polite">{text.length.toLocaleString('en-NG')} / {MESSAGE_MAX.toLocaleString('en-NG')}</p>}
         <p className="text-xs text-muted-foreground">Meet in busy parts of campus and check the item before paying. Payment is arranged directly between you and the other person; never share passwords or bank PINs.</p>
