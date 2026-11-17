@@ -48,16 +48,16 @@ function Inner({ children, adminOnly }: { children: React.ReactNode; adminOnly: 
           <p className="mt-1 text-xs text-muted-foreground">{isAdmin ? 'Administrator access' : 'Moderator access'}</p>
         </div>
         <p className="hidden px-3 pb-2 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground lg:block">Workspace</p>
-        <ul className="flex gap-1 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
+        <ul className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
           {visibleNav.map(({ href, label, Icon }) => {
             const active = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
             return (
-              <li key={href} className="shrink-0 lg:shrink">
+              <li key={href} className="min-w-0">
                 <Link
                   href={href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'group flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-full',
+                    'group flex w-full items-center gap-2 whitespace-nowrap rounded-xl px-2 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3 sm:px-3',
                     active
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
