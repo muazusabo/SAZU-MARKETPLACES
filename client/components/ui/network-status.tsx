@@ -31,8 +31,7 @@ export function NetworkStatus() {
     };
   }, []);
 
-  if (online && slowRequests.size === 0) return null;
-  return (
+if (online) return null;  return (
     <div
       role={online ? 'status' : 'alert'}
       aria-live={online ? 'polite' : 'assertive'}
