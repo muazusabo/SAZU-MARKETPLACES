@@ -31,10 +31,13 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
 };
 
 function Logo({ imageUrl }: { imageUrl?: string }) {
+  const [failedUrl, setFailedUrl] = useState<string>();
+  const showImage = !!imageUrl && imageUrl !== failedUrl;
+
   return (
     <Link href="/" aria-label="SAZU Marketplace home" className="group flex h-12 max-w-36 shrink-0 items-center font-display sm:max-w-44">
-      {imageUrl ? (
-        <Image src={imageUrl} alt="" width={176} height={48} unoptimized className="max-h-12 w-auto max-w-full object-contain transition-opacity group-hover:opacity-80" />
+      {showImage ? (
+        <Image src={imageUrl} alt="" width={176} height={48} unoptimized onError={() => setFailedUrl(imageUrl)} className="max-h-12 w-auto max-w-full object-contain transition-opacity group-hover:opacity-80" />
       ) : (
         <span className="flex items-center gap-2.5">
           <span aria-hidden className="grid size-10 place-items-center rounded-xl bg-primary text-sm font-bold text-accent shadow-sm transition-transform group-hover:-rotate-3 group-hover:scale-105">SZ</span>
