@@ -35,6 +35,10 @@ npm run dev                   # http://localhost:3000
 
 Without SMTP configured (development only), verification codes and password-reset links are **printed in the server's log**.
 
+## Deploying database changes
+
+Apply server migrations to the same database used by the API before deploying code that depends on them. For Render, set the web service's Pre-Deploy Command to `npm run migrate:up` (when the service root directory is `server`) or `cd server && npm run migrate:up` (when the repository root is the service root). Ensure the command has the same `DATABASE_URL` as the running API. For an already deployed service, run the migration once against that database before retrying the affected API request.
+
 To send them through Resend, set these in `server/.env` (use a sender address on a domain verified in Resend):
 
 ```dotenv

@@ -15,7 +15,7 @@ Browser ──► Next.js (apps/web) ──REST /api/v1──► NestJS (apps/ap
 - **Fail-fast config**: Zod-validated environment at boot.
 - **Uniform HTTP behaviour** (`configureApp`, shared with e2e tests): Helmet, strict CORS allow-list, global validation (whitelist, forbid unknown fields), `{ data, meta? }` success envelope, one error shape with `requestId`, no stack traces in responses, per-request id logging, global rate limiting.
 - **Web**: Server Components by default; Client Components only for the header menu, search form, and providers. API access goes through `lib/api.ts`.
-- **Design**: forest green + muted gold on warm paper, Bricolage Grotesque / Figtree self-hosted via npm; light default, dark tokens defined.
+- **Design**: navy and teal with restrained amber accents on cool neutral surfaces, Bricolage Grotesque / Figtree self-hosted via npm; light default, dark tokens defined.
 
 ## Layout
 

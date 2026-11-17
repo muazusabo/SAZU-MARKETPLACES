@@ -2,8 +2,8 @@
 
 ## Real-time delivery (Socket.IO)
 - Connect to the API origin with `auth: { token: <access token> }` (path `/socket.io`). The server verifies the signature and expiry, loads the account (it must still be active), and joins the connection to a private `user:<id>` room.
-- **Sockets are receive-only.** Clients send nothing; sending a message, marking read, blocking, and everything else uses the REST API where authorization lives. A socket can only ever receive events for its own user.
-- Events: `ready`; `message:new { conversationId, message }` (sent to the recipient with `mine:false` and to the sender's other tabs with `mine:true`); `notification:new`; `conversation:read { conversationId }` (read receipt); `auth_error` and `auth_expired` (then the server disconnects).
+- Sending messages, marking read, and blocking use REST. Voice calls use a limited set of authenticated socket actions (`call:initiate`, `call:accept`, `call:decline`, `call:end`, and `call:signal`); the server verifies conversation participation, blocks, and call state before relaying only SDP or ICE signaling data.
+- Events: `ready`; `message:new { conversationId, message }` (sent to the recipient with `mine:false` and to the sender's other tabs with `mine:true`); `notification:new`; `conversation:read { conversationId }` (read receipt); call lifecycle/signaling events; `auth_error` and `auth_expired` (then the server disconnects).
 - The connection is closed at the exact moment its access token expires. The web client then refreshes its token and reconnects with exponential backoff (max 6 attempts). At most 8 sockets per account.
 - Origin allow-list: the same `CORS_ORIGINS` list as the REST API (connections with a foreign `Origin` are refused). Non-browser clients carry no origin but still need a valid token.
 - Authenticated fallback: when the socket is down, the web app polls (4 s in a thread, 15 s for the inbox); when connected it only polls slowly as a safety net.
@@ -21,6 +21,12 @@ Persisted in `notifications` (never frontend-only). Endpoints: `GET /notificatio
 ## Blocking
 `POST` / `DELETE /conversations/:id/block`. A block applies in both directions: neither person can send in the conversation or start new ones with the other (existing history stays readable). Only the blocker is told they blocked; the other person only sees "You can't send messages in this conversation." The `canSend` flag is deliberately a single value.
 
+## Attachments
+Messages may include one image (JPEG, PNG, or WebP) or PDF up to 10 MB. Images are validated from their bytes, re-encoded to WebP, and stripped of metadata. Files are stored privately; the download endpoint checks conversation membership on every request and sends attachments with `nosniff` and `no-store` headers. Email confirmation is required to send, as with text messages. Do not send sensitive documents: attachments are available to both conversation participants.
+
+## Voice calls
+One-to-one, audio-only WebRTC calls are available from the conversation. Call requests require a verified email, an online recipient, an unblocked conversation, microphone permission, and an authenticated live socket. Incoming calls ring for 30 seconds; only one call per user is allowed at a time. Calls are not recorded or stored. The browser uses Google's public STUN service for network discovery; peer-to-peer network addresses may be visible to the other participant, and calls may not connect on restrictive networks without a TURN relay. A TURN service is not configured by this project.
+
 ## Reports
 `POST /reports { targetType: product|seller|user|conversation, targetId, reason, details? }` (verified email required). The reporter must be able to legitimately see the target: public listings and approved storefronts, a conversation they are in, or a person they share a conversation with. You cannot report yourself, your own listing or shop. One open report per reporter and target (409), `max_reports_per_day` (default 20, then 429). Reports are confidential from the reported party. **Reporting a conversation lets moderators read it** (the web form says so). `target_id` is polymorphic and has no foreign key; the service validates it. Moderators review reports in the admin dashboard (see `docs/admin.md`).
 
@@ -28,4 +34,4 @@ Persisted in `notifications` (never frontend-only). Endpoints: `GET /notificatio
 `max_messages_per_minute` (20, per user), `max_new_conversations_per_day` (30), `max_reports_per_day` (20), plus per-IP request throttling (`THROTTLE_WRITE_LIMIT`), and a check that blocks the same 20+ character message being sent to 6 or more different conversations within 10 minutes. Short replies are never flagged.
 
 ## Not yet implemented
-Redis (or similar) adapter for multi-instance sockets; moderator tools for reports and the notifications that follow them (Phase 7); a settings screen for the limits above (Phase 7); an inbox view of blocked people (unblock is available inside each conversation); `listing_expiring` notifications and retention jobs (Phase 9); typing indicators and attachments (not planned).
+Redis (or similar) adapter for multi-instance sockets; moderator tools for reports and the notifications that follow them (Phase 7); a settings screen for the limits above (Phase 7); an inbox view of blocked people (unblock is available inside each conversation); `listing_expiring` notifications and retention jobs (Phase 9); a TURN relay and multi-instance voice-call state.
