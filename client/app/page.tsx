@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { HomeListings } from '@/components/home/home-listings';
 import { SearchForm } from '@/components/home/search-form';
 import { GridSkeleton } from '@/components/marketplace/product-grid';
+import { fetchFreshPublicContent, PublicContent } from '@/lib/content';
 import { fetchCategories } from '@/lib/marketplace';
 
 export const dynamic = 'force-dynamic';
@@ -27,8 +28,22 @@ const STEPS = [
   { Icon: Handshake, title: 'Agree & Collect', text: 'Settle and get your item.' },
 ] as const;
 
+const HERO_IMAGE_POSITIONS: Record<string, string> = {
+  center: 'center',
+  top: 'center top',
+  bottom: 'center bottom',
+  left: 'left center',
+  right: 'right center',
+};
+
 export default async function HomePage() {
-  const categories = await fetchCategories().catch(() => null);
+  const [categories, content] = await Promise.all([
+    fetchCategories().catch(() => null),
+    fetchFreshPublicContent().catch((error: unknown): PublicContent => {
+      console.error('Unable to load public homepage settings.', error);
+      return {};
+    }),
+  ]);
   const availableCategories = new Set(categories?.map((category) => category.slug) ?? []);
   const visibleCategories = HOME_CATEGORIES.filter(({ slug }) => !categories || availableCategories.has(slug));
 
@@ -64,12 +79,14 @@ export default async function HomePage() {
           </div>
           <div className="relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:m-3 lg:ml-0 lg:rounded-2xl">
             <Image
-              src="/campus-scene.svg"
+              src={content.homepage_hero_image_url || '/campus-scene.svg'}
               alt="Illustration of a student with books in front of a university campus"
               fill
               priority
+              unoptimized
               sizes="(max-width: 1023px) 100vw, 55vw"
-              className="object-cover object-center"
+              className="object-cover"
+              style={{ objectPosition: HERO_IMAGE_POSITIONS[content.homepage_hero_image_position ?? 'center'] ?? 'center' }}
             />
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-brand-deep/55 via-transparent to-transparent" />
             <div className="absolute bottom-4 left-4 rounded-2xl border border-white/60 bg-white/95 px-4 py-3 shadow-lg sm:bottom-6 sm:left-6">

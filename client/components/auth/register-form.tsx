@@ -22,11 +22,14 @@ export function RegisterForm() {
   async function onSubmit(v: RegisterValues) {
     setError(null);
     try {
-      await apiFetch('/auth/register', jsonBody('POST', {
-        ...v,
-        phone: v.phone ? normalizeNigerianPhone(v.phone) : undefined,
-        campusArea: v.campusArea || undefined,
-      }));
+      await apiFetch('/auth/register', {
+        ...jsonBody('POST', {
+          ...v,
+          phone: v.phone ? normalizeNigerianPhone(v.phone) : undefined,
+          campusArea: v.campusArea || undefined,
+        }),
+        timeoutMs: 60_000,
+      });
       setDoneEmail(v.email);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Could not create your account. Try again.');

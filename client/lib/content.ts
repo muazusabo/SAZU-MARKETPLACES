@@ -1,6 +1,17 @@
 import { apiFetch } from './api';
 
-export type PublicContent = Partial<Record<'community_guidelines' | 'terms_text' | 'privacy_text' | 'about_text' | 'support_email' | 'support_phone' | 'site_logo_url', string>>;
+export type PublicContent = Partial<Record<
+  | 'community_guidelines'
+  | 'terms_text'
+  | 'privacy_text'
+  | 'about_text'
+  | 'support_email'
+  | 'support_phone'
+  | 'site_logo_url'
+  | 'homepage_hero_image_url'
+  | 'homepage_hero_image_position',
+  string
+>>;
 
 export const fetchPublicContent = () => apiFetch<PublicContent>('/settings/public', { next: { revalidate: 60 } });
 export const fetchFreshPublicContent = () => apiFetch<PublicContent>('/settings/public', { cache: 'no-store' });

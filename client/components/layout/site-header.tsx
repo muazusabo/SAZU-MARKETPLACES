@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowRight, Heart, Menu, MessageCircle, Bell, X, Home, Search, Shapes, Store,
-  LayoutDashboard, ChevronDown, type LucideIcon,
+  LayoutDashboard, ChevronDown, UserRound, ShieldCheck, Package, LogOut, type LucideIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
@@ -35,15 +35,15 @@ function Logo({ imageUrl }: { imageUrl?: string }) {
   const showImage = !!imageUrl && imageUrl !== failedUrl;
 
   return (
-    <Link href="/" aria-label="SAZU Marketplace home" className="group flex h-12 max-w-36 shrink-0 items-center font-display sm:max-w-44">
+    <Link href="/" aria-label="SAZU Marketplace home" className="group flex h-12 max-w-32 shrink-0 items-center font-display sm:max-w-44">
       {showImage ? (
         <Image src={imageUrl} alt="" width={176} height={48} unoptimized onError={() => setFailedUrl(imageUrl)} className="max-h-12 w-auto max-w-full object-contain transition-opacity group-hover:opacity-80" />
       ) : (
         <span className="flex items-center gap-2.5">
-          <span aria-hidden className="grid size-10 place-items-center rounded-xl bg-primary text-sm font-bold text-accent shadow-sm transition-transform group-hover:-rotate-3 group-hover:scale-105">SZ</span>
+          <span aria-hidden className="grid size-9 place-items-center rounded-xl bg-primary text-sm font-bold text-accent shadow-sm transition-transform group-hover:-rotate-3 group-hover:scale-105 max-[360px]:size-8">SZ</span>
           <span className="leading-tight">
             <span className="block text-base font-extrabold tracking-tight">SAZU</span>
-            <span className="block text-[11px] font-semibold tracking-wide text-muted-foreground">MARKETPLACE</span>
+            <span className="block text-[11px] font-semibold tracking-wide text-muted-foreground max-[360px]:hidden">MARKETPLACE</span>
           </span>
         </span>
       )}
@@ -55,6 +55,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const content = useQuery({ queryKey: ['public-site-content'], queryFn: fetchFreshPublicContent });
   const { status, user, logout } = useAuth();
@@ -64,6 +65,7 @@ export function SiteHeader() {
   const anonymous = status === 'anonymous';
   const isSeller = signedIn && user?.seller?.status === 'approved';
   const isStaff = signedIn && !!user?.roles.some((r) => r === 'admin' || r === 'moderator');
+  const dashboardHref = isStaff ? '/admin' : isSeller ? '/dashboard' : '/account';
   const accountLinks = [
     ...(isSeller ? [{ href: '/dashboard', label: 'Seller dashboard' }] : []),
     ...(isStaff ? [{ href: '/admin', label: 'Admin dashboard' }] : []),
@@ -80,22 +82,26 @@ export function SiteHeader() {
 
   useEffect(() => {
     setOpen(false);
+    setMobileProfileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !mobileProfileOpen) return;
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setMobileProfileOpen(false);
+      }
     }
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [open]);
+  }, [open, mobileProfileOpen]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-white/95 shadow-[0_3px_18px_-14px_rgba(3,61,46,0.5)] backdrop-blur-xl">
-      <div className="container flex h-[68px] items-center gap-2 sm:gap-4">
+      <div className="container flex h-[68px] items-center gap-1 sm:gap-4">
         <Logo imageUrl={content.data?.site_logo_url || undefined} />
-        <nav aria-label="Main" className="hidden min-w-0 items-center gap-1 xl:flex">
+        <nav aria-label="Main" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
           {NAV_LINKS.map(({ href, label }) => {
             const active = isActive(href);
             return (
@@ -115,7 +121,7 @@ export function SiteHeader() {
             );
           })}
         </nav>
-        <form onSubmit={submitSearch} role="search" className="ml-auto hidden min-w-0 max-w-[280px] flex-1 items-center rounded-full border border-border bg-brand-cream/70 px-3 transition-colors focus-within:border-primary/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10 md:flex xl:ml-0">
+        <form onSubmit={submitSearch} role="search" className="ml-auto hidden min-w-0 max-w-[280px] flex-1 items-center rounded-full border border-border bg-brand-cream/70 px-3 transition-colors focus-within:border-primary/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10 md:flex lg:ml-0">
           <label htmlFor="header-search" className="sr-only">Search products</label>
           <Search aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           <input
@@ -131,8 +137,8 @@ export function SiteHeader() {
             <ArrowRight aria-hidden className="size-4" />
           </button>
         </form>
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5 xl:ml-0">
-          <div className="hidden items-center xl:flex">
+        <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1.5 lg:ml-0">
+          <div className="hidden items-center lg:flex">
             {signedIn && [
               { href: '/wishlist', label: 'Wishlist', Icon: Heart },
               { href: '/messages', label: 'Messages', Icon: MessageCircle },
@@ -147,7 +153,7 @@ export function SiteHeader() {
             ))}
           </div>
           {signedIn && user && (
-            <details className="group relative hidden xl:block">
+            <details className="group relative hidden lg:block">
               <summary aria-label="Open account menu" className="flex cursor-pointer list-none items-center gap-2 rounded-full p-1 pr-2 transition-colors hover:bg-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 {user.profile.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -177,18 +183,99 @@ export function SiteHeader() {
           )}
           {anonymous && (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden rounded-full px-3 xl:inline-flex">
+              <Button asChild variant="ghost" size="sm" className="hidden rounded-full px-3 lg:inline-flex">
                 <Link href="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm" className="hidden h-10 rounded-full px-4 xl:inline-flex">
+              <Button asChild size="sm" className="hidden h-10 rounded-full px-4 lg:inline-flex">
                 <Link href="/register">Join SAZU</Link>
               </Button>
+            </>
+          )}
+          <Button asChild variant="ghost" size="icon" className="size-9 rounded-full max-[360px]:size-8 lg:hidden">
+            <Link href="/browse" aria-label="Search products"><Search aria-hidden /></Link>
+          </Button>
+          {signedIn && (
+            <>
+              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 lg:hidden', isActive('/messages') && 'bg-brand-cream text-primary')}>
+                <Link href="/messages" aria-label={badge('Messages') > 0 ? `Messages, ${badge('Messages')} unread` : 'Messages'}>
+                  <MessageCircle aria-hidden />
+                  {badge('Messages') > 0 && <span aria-hidden className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-destructive-foreground">{badge('Messages') > 99 ? '99+' : badge('Messages')}</span>}
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 lg:hidden', isActive('/notifications') && 'bg-brand-cream text-primary')}>
+                <Link href="/notifications" aria-label={badge('Notifications') > 0 ? `Notifications, ${badge('Notifications')} unread` : 'Notifications'}>
+                  <Bell aria-hidden />
+                  {badge('Notifications') > 0 && <span aria-hidden className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-destructive-foreground">{badge('Notifications') > 99 ? '99+' : badge('Notifications')}</span>}
+                </Link>
+              </Button>
+              {user && (
+                <div className="relative lg:hidden">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={mobileProfileOpen ? 'Close profile menu' : 'Open profile menu'}
+                    aria-expanded={mobileProfileOpen}
+                    aria-controls="mobile-profile-menu"
+                    onClick={() => {
+                      setMobileProfileOpen((value) => !value);
+                      setOpen(false);
+                    }}
+                    className={cn('size-9 rounded-xl border border-transparent max-[360px]:size-8', mobileProfileOpen && 'border-accent text-brand-deep')}
+                  >
+                    {user.profile.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.profile.avatarUrl} alt="" className="size-7 rounded-full object-cover" />
+                    ) : <UserRound aria-hidden />}
+                  </Button>
+                  {mobileProfileOpen && (
+                    <nav id="mobile-profile-menu" aria-label="Profile" className="absolute right-0 top-full z-[60] mt-2 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
+                      <div className="border-b border-border px-4 py-3">
+                        <p className="truncate text-sm font-bold">{user.profile.displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                      <ul className="grid gap-1 p-2">
+                        {[
+                          { href: '/account', label: 'My Profile', Icon: UserRound },
+                          { href: '/account#student-verification-title', label: 'Profile Verification', Icon: ShieldCheck },
+                          { href: dashboardHref, label: 'Dashboard', Icon: LayoutDashboard },
+                          ...(isSeller ? [{ href: '/dashboard#seller-listings', label: 'My Listings', Icon: Package }] : []),
+                          { href: '/wishlist', label: 'Favorites', Icon: Heart },
+                          { href: '/messages', label: 'Messages', Icon: MessageCircle },
+                        ].map(({ href, label, Icon }) => (
+                          <li key={`${label}-${href}`}>
+                            <Link
+                              href={href}
+                              onClick={() => setMobileProfileOpen(false)}
+                              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-brand-cream"
+                            >
+                              <Icon aria-hidden className="size-5 shrink-0" />
+                              {label}
+                              {badge(label) > 0 && <span className="ml-auto rounded-full bg-destructive px-2 text-xs font-bold leading-5 text-destructive-foreground">{badge(label)}</span>}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="border-t border-border p-2">
+                        <button
+                          type="button"
+                          onClick={() => { setMobileProfileOpen(false); void logout(); }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/5"
+                        >
+                          <LogOut aria-hidden className="size-5 shrink-0" />
+                          Sign out
+                        </button>
+                      </div>
+                    </nav>
+                  )}
+                </div>
+              )}
             </>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full xl:hidden"
+            className="size-9 rounded-full max-[360px]:size-8 lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? 'Close menu' : 'Open menu'}
@@ -199,7 +286,7 @@ export function SiteHeader() {
         </div>
       </div>
       {open && (
-        <nav id="mobile-menu" aria-label="Mobile" className="absolute inset-x-0 top-full max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-border bg-white shadow-xl xl:hidden">
+        <nav id="mobile-menu" aria-label="Mobile" className="absolute inset-x-0 top-full max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-border bg-white shadow-xl lg:hidden">
           <ul className="container grid gap-1 py-4">
             <li className="mb-2">
               <form onSubmit={submitSearch} role="search" className="flex items-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-3 focus-within:border-primary/40 focus-within:bg-white">

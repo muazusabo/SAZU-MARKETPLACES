@@ -83,5 +83,12 @@ export const adminApi = {
     form.append('file', file);
     return authedFetch<AdminSetting>('/admin/settings/site-logo', { method: 'POST', body: form });
   },
+  uploadHomepageHero: (file: File, position: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('position', position);
+    return authedFetch<AdminSetting>('/admin/settings/homepage-hero', { method: 'POST', body: form });
+  },
+  removeHomepageHero: () => authedFetch<AdminSetting>('/admin/settings/homepage-hero', jsonBody('DELETE')),
   audit: (action: string, page: number) => authedFetch<Paged<AuditEntry>>(`/admin/audit-logs${qs({ action, page, pageSize: 25 })}`),
 };

@@ -60,7 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       ...state,
       async login(email, password) {
-        const r = await apiFetch<{ accessToken: string; user: Me }>('/auth/login', jsonBody('POST', { email, password }));
+        const r = await apiFetch<{ accessToken: string; user: Me }>('/auth/login', {
+          ...jsonBody('POST', { email, password }),
+          timeoutMs: 60_000,
+        });
         setAccessToken(r.accessToken);
         setState({ status: 'authenticated', user: r.user });
         return r.user;
