@@ -77,7 +77,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/80 bg-white/95 shadow-[0_3px_18px_-14px_rgba(3,61,46,0.5)] backdrop-blur-xl">
       <div className="container flex h-[68px] items-center gap-3 sm:gap-5">
         <SiteLogo />
-        <nav aria-label="Main" className="hidden min-w-0 flex-1 items-center justify-center gap-2 xl:gap-3 lg:flex">
+        <nav aria-label="Main" className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex lg:gap-2 xl:gap-3">
           {NAV_LINKS.map(({ href, label }) => {
             const active = isActive(href);
             return (
@@ -97,7 +97,7 @@ export function SiteHeader() {
             );
           })}
         </nav>
-        <form onSubmit={submitSearch} role="search" className="ml-auto hidden min-w-0 max-w-[280px] flex-1 items-center rounded-full border border-border bg-brand-cream/70 px-3 transition-colors focus-within:border-primary/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10 md:flex lg:ml-0">
+        <form onSubmit={submitSearch} role="search" className="ml-auto hidden min-w-0 max-w-[280px] flex-1 items-center rounded-full border border-border bg-brand-cream/70 px-3 transition-colors focus-within:border-primary/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10 xl:flex lg:ml-0">
           <label htmlFor="header-search" className="sr-only">Search products</label>
           <Search aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           <input
@@ -114,7 +114,7 @@ export function SiteHeader() {
           </button>
         </form>
         <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1.5 lg:ml-0">
-          <div className="hidden items-center lg:flex">
+          <div className="hidden items-center md:flex">
             {signedIn && [
               { href: '/wishlist', label: 'Wishlist', Icon: Heart },
               { href: '/messages', label: 'Messages', Icon: MessageCircle },
@@ -129,7 +129,7 @@ export function SiteHeader() {
             ))}
           </div>
           {signedIn && user && (
-            <details className="group relative hidden lg:block">
+            <details className="group relative hidden md:block">
               <summary aria-label="Open account menu" className="flex cursor-pointer list-none items-center gap-2 rounded-full p-1 pr-2 transition-colors hover:bg-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 {user.profile.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -159,33 +159,33 @@ export function SiteHeader() {
           )}
           {anonymous && (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden rounded-full px-3 lg:inline-flex">
+              <Button asChild variant="ghost" size="sm" className="hidden rounded-full px-3 md:inline-flex">
                 <Link href="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm" className="hidden h-10 rounded-full px-4 lg:inline-flex">
+              <Button asChild size="sm" className="hidden h-10 rounded-full px-4 md:inline-flex">
                 <Link href="/register">Join SAZU</Link>
               </Button>
             </>
           )}
-          <Button asChild variant="ghost" size="icon" className="size-9 rounded-full max-[360px]:size-8 lg:hidden">
+          <Button asChild variant="ghost" size="icon" className="size-9 rounded-full max-[360px]:size-8 md:hidden">
             <Link href="/browse" aria-label="Search products"><Search aria-hidden /></Link>
           </Button>
           {signedIn && (
             <>
-              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 lg:hidden', isActive('/messages') && 'bg-brand-cream text-primary')}>
+              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 md:hidden', isActive('/messages') && 'bg-brand-cream text-primary')}>
                 <Link href="/messages" aria-label={badge('Messages') > 0 ? `Messages, ${badge('Messages')} unread` : 'Messages'}>
                   <MessageCircle aria-hidden />
                   {badge('Messages') > 0 && <span aria-hidden className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-destructive-foreground">{badge('Messages') > 99 ? '99+' : badge('Messages')}</span>}
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 lg:hidden', isActive('/notifications') && 'bg-brand-cream text-primary')}>
+              <Button asChild variant="ghost" size="icon" className={cn('relative size-9 rounded-full max-[360px]:size-8 md:hidden', isActive('/notifications') && 'bg-brand-cream text-primary')}>
                 <Link href="/notifications" aria-label={badge('Notifications') > 0 ? `Notifications, ${badge('Notifications')} unread` : 'Notifications'}>
                   <Bell aria-hidden />
                   {badge('Notifications') > 0 && <span aria-hidden className="absolute right-0 top-0 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-destructive-foreground">{badge('Notifications') > 99 ? '99+' : badge('Notifications')}</span>}
                 </Link>
               </Button>
               {user && (
-                <div className="relative lg:hidden">
+                <div className="relative md:hidden">
                   <Button
                     type="button"
                     variant="ghost"
@@ -251,7 +251,7 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 rounded-full max-[360px]:size-8 lg:hidden"
+            className="size-9 rounded-full max-[360px]:size-8 md:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? 'Close menu' : 'Open menu'}
@@ -262,7 +262,7 @@ export function SiteHeader() {
         </div>
       </div>
       {open && (
-        <nav id="mobile-menu" aria-label="Mobile" className="absolute inset-x-0 top-full max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-border bg-white shadow-xl lg:hidden">
+        <nav id="mobile-menu" aria-label="Mobile" className="absolute inset-x-0 top-full max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-border bg-white shadow-xl md:hidden">
           <ul className="container grid gap-1 py-4">
             <li className="mb-2">
               <form onSubmit={submitSearch} role="search" className="flex items-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-3 focus-within:border-primary/40 focus-within:bg-white">
