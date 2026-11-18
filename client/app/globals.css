@@ -60,7 +60,12 @@
     from { transform: translateX(-120%); }
     to { transform: translateX(340%); }
   }
+  @keyframes admin-count-change {
+    0% { opacity: 0.45; transform: translateY(0.35rem) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
   .admin-metric-card { animation: admin-card-enter 450ms both; }
+  .admin-metric-value { animation: admin-count-change 280ms ease-out; }
   .network-progress { animation: network-progress 1.6s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

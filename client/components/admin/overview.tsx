@@ -21,7 +21,14 @@ const CARDS = [
 ] as const;
 
 function Content() {
-  const q = useQuery({ queryKey: ['admin-overview'], queryFn: adminApi.overview, refetchInterval: 30_000 });
+  const q = useQuery({
+    queryKey: ['admin-overview'],
+    queryFn: adminApi.overview,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
   return (
     <div className="space-y-8">
       <header className="rounded-2xl bg-brand-navy px-6 py-7 text-white sm:px-8 sm:py-9">
@@ -36,7 +43,7 @@ function Content() {
           </p>
           <p className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-primary-foreground/70">
             <Activity aria-hidden className="size-4 text-accent" />
-            {q.isFetching && q.data ? 'Refreshing live data…' : 'Live numbers refresh every 30 seconds'}
+            {q.isFetching && q.data ? 'Refreshing live data…' : 'Live numbers refresh every 10 seconds'}
           </p>
         </div>
       </header>
@@ -48,7 +55,11 @@ function Content() {
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Marketplace pulse</p>
                 <h2 id="metrics-h" className="mt-1 text-xl font-bold">At a glance</h2>
               </div>
-              {q.data && <p className="text-xs text-muted-foreground">Updated continuously</p>}
+              {q.data && (
+                <p className="text-xs text-muted-foreground" aria-live="polite">
+                  Updated {new Date(q.dataUpdatedAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </p>
+              )}
             </div>
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {CARDS.map((card, index) => {
@@ -72,7 +83,7 @@ function Content() {
                         : label}
                       <span className="mt-1 block text-xs font-normal text-muted-foreground">{detail}</span>
                     </dt>
-                    <dd className="mt-2 text-3xl font-extrabold tabular-nums tracking-tight">
+                    <dd key={`${key}-${q.data?.metrics[key] ?? 'loading'}`} className="admin-metric-value mt-2 text-3xl font-extrabold tabular-nums tracking-tight">
                       {q.data ? q.data.metrics[key].toLocaleString('en-NG') : <Skeleton className="h-9 w-16" />}
                     </dd>
                   </div>

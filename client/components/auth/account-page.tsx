@@ -110,7 +110,10 @@ function StudentVerificationCard({ user }: { user: Me }) {
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="student-verification-title" className="font-bold">Student verification</h2>
-          <Badge variant={status === 'verified' ? 'success' : status === 'rejected' ? 'destructive' : status === 'pending' ? 'warning' : 'default'}>{statusLabel}</Badge>
+          <Badge variant={status === 'verified' ? 'success' : status === 'rejected' ? 'destructive' : status === 'pending' ? 'warning' : 'default'}>
+            {status === 'verified' && <BadgeCheck aria-hidden className="mr-1 size-3.5" />}
+            {statusLabel}
+          </Badge>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {status === 'pending'
@@ -218,6 +221,9 @@ function AccountContent() {
               <p className="mt-2 flex flex-wrap items-center gap-2 break-all text-xs text-primary-foreground/75 sm:text-sm">
                 {user.email}
                 {user.emailVerified && <Badge variant="success"><BadgeCheck aria-hidden className="mr-1 size-3.5" />Verified</Badge>}
+                {user.profile.studentVerificationStatus === 'verified' && (
+                  <Badge variant="success"><BadgeCheck aria-hidden className="mr-1 size-3.5" />Verified student</Badge>
+                )}
               </p>
             </div>
           </div>

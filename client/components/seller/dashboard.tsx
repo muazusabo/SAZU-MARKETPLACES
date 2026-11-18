@@ -1,6 +1,6 @@
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ImageOff, Plus } from 'lucide-react';
+import { BadgeCheck, ImageOff, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -48,7 +48,7 @@ function RowActions({ row }: { row: OwnListingRow }) {
   );
 }
 
-function Content({ shopName, published, applicationSubmitted }: { shopName: string; published: boolean; applicationSubmitted: boolean }) {
+function Content({ shopName, verified, published, applicationSubmitted }: { shopName: string; verified: boolean; published: boolean; applicationSubmitted: boolean }) {
   const { user } = useAuth();
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('all');
   const [page, setPage] = useState(1);
@@ -65,7 +65,15 @@ function Content({ shopName, published, applicationSubmitted }: { shopName: stri
   return (
     <div className="container max-w-7xl py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-5 sm:p-7">
-        <div><p className="text-sm font-semibold text-primary">Seller workspace</p><h1 className="mt-1 text-2xl font-bold sm:text-3xl">{`Welcome${user?.profile.displayName ? `, ${user.profile.displayName}` : ''}`}</h1><p className="mt-1 text-muted-foreground">{shopName} · Manage listings and keep up with buyers.</p></div>
+        <div>
+          <p className="text-sm font-semibold text-primary">Seller workspace</p>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{`Welcome${user?.profile.displayName ? `, ${user.profile.displayName}` : ''}`}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-muted-foreground">
+            {shopName}
+            {verified && <span className="inline-flex items-center gap-1 font-semibold text-success"><BadgeCheck aria-hidden className="size-4" />Verified seller</span>}
+            <span>· Manage listings and keep up with buyers.</span>
+          </p>
+        </div>
         <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:w-auto">
           <Button asChild variant="outline" className="min-h-11"><Link href="/dashboard/settings">Shop settings</Link></Button>
           <Button asChild className="min-h-11"><Link href="/dashboard/listings/new"><Plus />New listing</Link></Button>
@@ -166,5 +174,5 @@ function PageNav({ meta, setPage }: { meta: { page: number; totalPages: number }
 void Pagination;
 
 export function Dashboard({ published = false, applicationSubmitted = false }: { published?: boolean; applicationSubmitted?: boolean }) {
-  return <SellerGate allowPending>{(seller) => <Content shopName={seller.shopName} published={published} applicationSubmitted={applicationSubmitted} />}</SellerGate>;
+  return <SellerGate allowPending>{(seller) => <Content shopName={seller.shopName} verified={seller.verified} published={published} applicationSubmitted={applicationSubmitted} />}</SellerGate>;
 }

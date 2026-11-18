@@ -5,15 +5,13 @@ import {
   ArrowRight, Heart, Menu, MessageCircle, Bell, X, Home, Search, Shapes, Store,
   LayoutDashboard, ChevronDown, UserRound, ShieldCheck, Package, LogOut, type LucideIcon,
 } from 'lucide-react';
-import Image from 'next/image';
-import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useRealtime } from '@/components/realtime/realtime-provider';
 import { NAV_LINKS } from '@/lib/site';
-import { fetchFreshPublicContent } from '@/lib/content';
 import { cn } from '@/lib/utils';
+import { SiteLogo } from './site-logo';
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   '/': Home,
@@ -30,34 +28,12 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
   '/notifications': Bell,
 };
 
-function Logo({ imageUrl }: { imageUrl?: string }) {
-  const [failedUrl, setFailedUrl] = useState<string>();
-  const showImage = !!imageUrl && imageUrl !== failedUrl;
-
-  return (
-    <Link href="/" aria-label="SAZU Marketplace home" className="group flex h-12 max-w-32 shrink-0 items-center font-display sm:max-w-44">
-      {showImage ? (
-        <Image src={imageUrl} alt="" width={176} height={48} unoptimized onError={() => setFailedUrl(imageUrl)} className="max-h-12 w-auto max-w-full object-contain transition-opacity group-hover:opacity-80" />
-      ) : (
-        <span className="flex items-center gap-2.5">
-          <span aria-hidden className="grid size-9 place-items-center rounded-xl bg-primary text-sm font-bold text-accent shadow-sm transition-transform group-hover:-rotate-3 group-hover:scale-105 max-[360px]:size-8">SZ</span>
-          <span className="leading-tight">
-            <span className="block text-base font-extrabold tracking-tight">SAZU</span>
-            <span className="block text-[11px] font-semibold tracking-wide text-muted-foreground max-[360px]:hidden">MARKETPLACE</span>
-          </span>
-        </span>
-      )}
-    </Link>
-  );
-}
-
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const content = useQuery({ queryKey: ['public-site-content'], queryFn: fetchFreshPublicContent });
   const { status, user, logout } = useAuth();
   const { unreadMessages, unreadNotifications } = useRealtime();
   const badge = (label: string) => (label === 'Messages' ? unreadMessages : label === 'Notifications' ? unreadNotifications : 0);
@@ -99,9 +75,9 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-white/95 shadow-[0_3px_18px_-14px_rgba(3,61,46,0.5)] backdrop-blur-xl">
-      <div className="container flex h-[68px] items-center gap-1 sm:gap-4">
-        <Logo imageUrl={content.data?.site_logo_url || undefined} />
-        <nav aria-label="Main" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+      <div className="container flex h-[68px] items-center gap-3 sm:gap-5">
+        <SiteLogo />
+        <nav aria-label="Main" className="hidden min-w-0 flex-1 items-center justify-center gap-2 xl:gap-3 lg:flex">
           {NAV_LINKS.map(({ href, label }) => {
             const active = isActive(href);
             return (
@@ -110,7 +86,7 @@ export function SiteHeader() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   active
                     ? 'bg-brand-light-lime text-brand-deep'
                     : 'text-muted-foreground hover:bg-brand-cream hover:text-brand-deep',
