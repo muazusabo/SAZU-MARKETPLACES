@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   title: { default: `${SITE.name}: ${SITE.tagline}`, template: `%s | ${SITE.name}` },
   description: SITE.description,
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: [{ url: '/icon.png', type: 'image/png', sizes: '512x512' }],
+    shortcut: '/icon.png',
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: { title: SITE.name, description: SITE.description, type: 'website', siteName: SITE.name },
   alternates: { canonical: '/' },
