@@ -124,7 +124,7 @@ export class AdminCatalogService {
     const long = typeof after === 'string' && after.length > 200;
     // Long texts are logged by size, not content, to keep the audit trail readable.
     await this.audit.record(adminId, 'settings.update', 'setting', key, long ? { length: (after as string).length } : { before, after });
-    if (key === 'site_logo_path' && typeof before === 'string' && before && before !== after) {
+    if ((key === 'site_logo_path' || key === 'homepage_hero_image_path') && typeof before === 'string' && before && before !== after) {
       await this.storage.deletePublic(before);
     }
     return (await this.settings.all()).find((s) => s.key === key);
@@ -147,5 +147,65 @@ export class AdminCatalogService {
       throw error;
     }
     return (await this.settings.all()).find((s) => s.key === 'site_logo_path');
+  }
+
+  async uploadHomepageHero(adminId: string, file: Express.Multer.File | undefined, requestedPosition?: string) {
+    const [maxBytes, allowed, currentPosition] = await Promise.all([
+      this.settings.get('max_image_bytes'),
+      this.settings.get('allowed_image_types'),
+      this.settings.get('homepage_hero_image_position'),
+    ]);
+    const position = this.settings.validate(
+      'homepage_hero_image_position',
+      requestedPosition ?? currentPosition,
+    ) as string;
+    const processed = await this.images.processHomepageHero(assertUpload(file, maxBytes), allowed);
+    const storedKey = await this.storage.putPublic(`branding/hero/${randomUUID()}.webp`, processed, 'image/webp');
+    let change: Awaited<ReturnType<SettingsService['setHomepageHero']>>;
+    try {
+      change = await this.settings.setHomepageHero(storedKey, position, adminId);
+    } catch (error) {
+      await this.storage.deletePublic(storedKey);
+      throw error;
+    }
+
+    try {
+      await this.audit.record(adminId, 'settings.update', 'setting', 'homepage_hero_image_path', {
+        changed: true,
+        position,
+      });
+    } catch (error) {
+      try {
+        await this.settings.setHomepageHero(
+          String(change.before.imagePath),
+          String(change.before.position),
+          adminId,
+        );
+      } catch (rollbackError) {
+        throw new AggregateError([error, rollbackError], 'Could not publish or roll back the homepage hero image.');
+      }
+      await this.storage.deletePublic(storedKey);
+      throw error;
+    }
+
+    await this.storage.deletePublic(typeof change.before.imagePath === 'string' ? change.before.imagePath : undefined);
+    return (await this.settings.all()).find((setting) => setting.key === 'homepage_hero_image_path');
+  }
+
+  async removeHomepageHero(adminId: string) {
+    const before = await this.settings.get('homepage_hero_image_path');
+    const previousPosition = await this.settings.get('homepage_hero_image_position');
+    const change = await this.settings.setHomepageHero('', 'center', adminId);
+    try {
+      await this.audit.record(adminId, 'settings.update', 'setting', 'homepage_hero_image_path', {
+        removed: true,
+        previousPosition,
+      });
+    } catch (error) {
+      await this.settings.setHomepageHero(String(change.before.imagePath), String(change.before.position), adminId);
+      throw error;
+    }
+    await this.storage.deletePublic(before);
+    return (await this.settings.all()).find((setting) => setting.key === 'homepage_hero_image_path');
   }
 }

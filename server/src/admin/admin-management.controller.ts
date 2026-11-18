@@ -62,6 +62,26 @@ export class AdminManagementController {
     return this.catalog.uploadSiteLogo(u.id, file);
   }
 
+  @Post('settings/homepage-hero')
+  @Throttle(WRITE_THROTTLE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MULTER_HARD_LIMIT, files: 1 } }))
+  @ApiOperation({ summary: 'Upload and publish the homepage hero image' })
+  uploadHomepageHero(
+    @CurrentUser() u: AuthUser,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('position') position?: string,
+  ) {
+    return this.catalog.uploadHomepageHero(u.id, file, position);
+  }
+
+  @Delete('settings/homepage-hero')
+  @Throttle(WRITE_THROTTLE)
+  @ApiOperation({ summary: 'Restore the default homepage hero illustration' })
+  removeHomepageHero(@CurrentUser() u: AuthUser) {
+    return this.catalog.removeHomepageHero(u.id);
+  }
+
   @Get('audit-logs') @ApiOperation({ summary: 'Audit trail of sensitive administrative actions' })
   audit(@Query() q: AuditQuery) { return this.users.auditLog(q.action, q.actorId, q.page, q.pageSize); }
 }

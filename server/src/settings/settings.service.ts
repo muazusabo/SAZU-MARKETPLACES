@@ -26,10 +26,12 @@ export const SETTING_DEFAULTS = {
   privacy_text: '',
   about_text: '',
   site_logo_path: '',
+  homepage_hero_image_path: '',
+  homepage_hero_image_position: 'center' as string,
 };
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 
-type Def = { type: 'boolean' | 'int' | 'text' | 'image' | 'imageTypes'; group: string; label: string; min?: number; max?: number; maxLength?: number; public?: boolean };
+type Def = { type: 'boolean' | 'int' | 'text' | 'image' | 'imageTypes' | 'heroPosition'; group: string; label: string; min?: number; max?: number; maxLength?: number; public?: boolean };
 /** What each setting is and what values it accepts. Everything an administrator can change is validated against this. */
 export const SETTING_DEFS: Record<SettingKey, Def> = {
   seller_approval_required: { type: 'boolean', group: 'Sellers and listings', label: 'Require administrator approval for sellers' },
@@ -52,8 +54,11 @@ export const SETTING_DEFS: Record<SettingKey, Def> = {
   terms_text: { type: 'text', maxLength: 50_000, group: 'Contact and content', label: 'Terms of use', public: true },
   privacy_text: { type: 'text', maxLength: 50_000, group: 'Contact and content', label: 'Privacy policy', public: true },
   site_logo_path: { type: 'image', group: 'General', label: 'Site logo', public: true },
+  homepage_hero_image_path: { type: 'image', group: 'Homepage Appearance', label: 'Hero Background Image', public: true },
+  homepage_hero_image_position: { type: 'heroPosition', group: 'Homepage Appearance', label: 'Hero image position', public: true },
 };
 export const IMAGE_TYPES = ['jpeg', 'png', 'webp'];
+export const HERO_IMAGE_POSITIONS = ['center', 'top', 'bottom', 'left', 'right'] as const;
 
 @Injectable()
 export class SettingsService {
@@ -86,8 +91,12 @@ export class SettingsService {
   async publicContent(): Promise<Record<string, string>> {
     const out: Record<string, string> = {};
     for (const [k, def] of Object.entries(SETTING_DEFS)) if (def.public) out[k] = await this.get(k as SettingKey) as string;
-    out.site_logo_url = this.storage.publicUrl(out.site_logo_path) ?? '';
+    out.site_logo_url = out.site_logo_path ? this.storage.publicUrl(out.site_logo_path) ?? '' : '';
+    out.homepage_hero_image_url = out.homepage_hero_image_path
+      ? this.storage.publicUrl(out.homepage_hero_image_path) ?? ''
+      : '';
     delete out.site_logo_path;
+    delete out.homepage_hero_image_path;
     return out;
   }
 
@@ -100,7 +109,9 @@ export class SettingsService {
       return {
         key,
         ...SETTING_DEFS[key],
-        value: SETTING_DEFS[key].type === 'image' ? this.storage.publicUrl(value as string) ?? '' : value,
+        value: SETTING_DEFS[key].type === 'image' && value
+          ? this.storage.publicUrl(value as string) ?? ''
+          : value,
         updatedAt: byKey.get(key)?.updated_at ?? null,
       };
     });
@@ -121,10 +132,19 @@ export class SettingsService {
       }
       return value;
     }
+    if (def.type === 'heroPosition') {
+      if (typeof value !== 'string' || !HERO_IMAGE_POSITIONS.includes(value as (typeof HERO_IMAGE_POSITIONS)[number])) {
+        throw bad(`Choose a hero image position: ${HERO_IMAGE_POSITIONS.join(', ')}.`);
+      }
+      return value;
+    }
     if (typeof value !== 'string') throw bad('This setting must be text.');
     if (def.type === 'image') {
-      if (value && !/^(?:cloudinary:)?branding\/logo\/[a-f0-9-]+\.webp$/.test(value)) {
-        throw bad('Upload a valid site logo image.');
+      const pathPattern = key === 'site_logo_path'
+        ? /^(?:cloudinary:)?branding\/logo\/[a-f0-9-]+\.webp$/
+        : /^(?:cloudinary:)?branding\/hero\/[a-f0-9-]+\.webp$/;
+      if (value && !pathPattern.test(value)) {
+        throw bad(key === 'site_logo_path' ? 'Upload a valid site logo image.' : 'Upload a valid homepage hero image.');
       }
       return value;
     }
@@ -141,5 +161,31 @@ export class SettingsService {
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now(), updated_by = EXCLUDED.updated_by`, [key, JSON.stringify(clean), actorId]);
     this.cache = undefined;
     return { before: prev.rows[0]?.value ?? SETTING_DEFAULTS[key as SettingKey], after: clean };
+  }
+
+  async setHomepageHero(imagePath: string, position: string, actorId: string) {
+    const cleanPath = this.validate('homepage_hero_image_path', imagePath) as string;
+    const cleanPosition = this.validate('homepage_hero_image_position', position) as string;
+    const keys = ['homepage_hero_image_path', 'homepage_hero_image_position'] as const;
+    const before = await this.db.transaction(async (client) => {
+      const previous = await client.query<{ key: string; value: unknown }>(
+        'SELECT key, value FROM platform_settings WHERE key = ANY($1::text[])',
+        [keys],
+      );
+      const previousValues = new Map(previous.rows.map((row) => [row.key, row.value]));
+      for (const [key, value] of [[keys[0], cleanPath], [keys[1], cleanPosition]] as const) {
+        await client.query(
+          `INSERT INTO platform_settings (key, value, updated_by) VALUES ($1, $2::jsonb, $3)
+           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now(), updated_by = EXCLUDED.updated_by`,
+          [key, JSON.stringify(value), actorId],
+        );
+      }
+      return {
+        imagePath: previousValues.get(keys[0]) ?? SETTING_DEFAULTS[keys[0]],
+        position: previousValues.get(keys[1]) ?? SETTING_DEFAULTS[keys[1]],
+      };
+    });
+    this.cache = undefined;
+    return { before, after: { imagePath: cleanPath, position: cleanPosition } };
   }
 }

@@ -10,7 +10,7 @@ export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 
   @Get('public')
-  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+  @Header('Cache-Control', 'public, max-age=0, must-revalidate')
   @ApiOperation({ summary: 'Public site content: support contacts, guidelines, terms, privacy, about (empty = not published yet)' })
   publicContent() { return this.settings.publicContent(); }
 }
