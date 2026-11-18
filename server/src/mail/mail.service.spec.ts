@@ -32,19 +32,14 @@ describe('MailService', () => {
     (createTransport as jest.Mock).mockReturnValue(transport);
   });
 
-  it('does not wait for SMTP delivery before resolving', async () => {
-    let resolveDelivery!: () => void;
-    sendMail.mockReturnValue(new Promise<void>((resolve) => {
-      resolveDelivery = resolve;
-    }));
-
+  it('waits for SMTP delivery and resolves only after sendMail completes', async () => {
     const service = new MailService(config);
-    await expect(service.send(message)).resolves.toBeUndefined();
+    sendMail.mockResolvedValue({ accepted: ['buyer@example.com'] });
 
+    await expect(service.send(message)).resolves.toBeUndefined();
     expect(sendMail).toHaveBeenCalledWith({
       from: configValues.MAIL_FROM,
       ...message,
     });
-    resolveDelivery();
   });
 });

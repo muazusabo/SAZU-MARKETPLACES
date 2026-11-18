@@ -18,7 +18,7 @@ export function SiteLogo() {
           src={imageUrl}
           alt=""
           width={176}
-          height={48}
+          height={49}
           unoptimized
           onError={() => setFailedUrl(imageUrl)}
           className="max-h-12 w-auto max-w-full rounded-xl border border-primary/10 bg-white p-1 object-contain shadow-sm transition-all group-hover:border-primary/20 group-hover:shadow-md"

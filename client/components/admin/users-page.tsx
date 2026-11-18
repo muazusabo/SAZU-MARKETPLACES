@@ -62,6 +62,10 @@ function Detail({ id }: { id: string }) {
         <div><dt className="font-semibold">Full name</dt><dd className="text-muted-foreground">{u.profile.fullName}</dd></div>
         <div><dt className="font-semibold">Phone</dt><dd className="text-muted-foreground">{u.profile.phone ?? 'Not provided'}</dd></div>
         <div><dt className="font-semibold">Campus area</dt><dd className="text-muted-foreground">{u.profile.campusArea ?? 'Not provided'}</dd></div>
+        <div><dt className="font-semibold">Email verification</dt><dd>
+          <Button size="sm" variant={u.emailVerified ? 'outline' : 'default'} disabled={u.status === 'deleted'} onClick={() => run(() => adminApi.emailVerification(id, !u.emailVerified), u.emailVerified ? 'Email verification removed.' : 'Email address verified.')}>
+            {u.emailVerified ? 'Remove email verification' : 'Verify email address'}
+          </Button></dd></div>
         <div><dt className="font-semibold">Student verification</dt><dd>
           <select aria-label="Student verification status" className="h-9 rounded-md border border-input bg-card px-2" value={u.profile.studentVerification} onChange={(e) => run(() => adminApi.studentVerification(id, e.target.value), 'Verification status saved.')}>
             <option value="unverified">Unverified</option><option value="pending">Pending review</option><option value="verified">Verified</option><option value="rejected">Rejected</option>

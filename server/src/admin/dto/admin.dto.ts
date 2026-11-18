@@ -58,6 +58,10 @@ export class StudentVerificationDto {
   @ApiProperty({ enum: ['unverified', 'pending', 'verified', 'rejected'] }) @IsIn(['unverified', 'pending', 'verified', 'rejected']) status: 'unverified' | 'pending' | 'verified' | 'rejected';
   @ApiPropertyOptional() @apply(reason()) note?: string;
 }
+export class EmailVerificationDto {
+  @ApiProperty() @IsBoolean() verified: boolean;
+  @ApiPropertyOptional() @apply(reason()) note?: string;
+}
 
 export class AuditQuery extends PageQuery {
   @IsOptional() @Trim() @IsString() @MaxLength(80) action?: string;

@@ -95,6 +95,18 @@ export class AdminUsersService {
     return this.detail(id);
   }
 
+  async setEmailVerification(adminId: string, id: string, verified: boolean, note?: string) {
+    const r = await this.db.query(
+      `UPDATE users
+       SET email_verified_at = CASE WHEN $2 THEN COALESCE(email_verified_at, now()) ELSE NULL END
+       WHERE id = $1 AND status <> 'deleted'`,
+      [id, verified],
+    );
+    if (!r.rowCount) throw new NotFoundException('Active user not found.');
+    await this.audit.record(adminId, 'user.email_verification', 'user', id, { verified, ...(note ? { note } : {}) });
+    return this.detail(id);
+  }
+
   async auditLog(action: string | undefined, actorId: string | undefined, page = 1, pageSize = 30) {
     const params: unknown[] = []; const where: string[] = [];
     if (action) { params.push(`${likeEscape(action)}%`); where.push(`a.action ILIKE $${params.length} ESCAPE '\\'`); }

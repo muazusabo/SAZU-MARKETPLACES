@@ -17,35 +17,40 @@ export class MailService {
   private readonly isProd: boolean;
 
   constructor(config: ConfigService<Env, true>) {
-    this.from = config.get('MAIL_FROM', { infer: true });
+    const configuredFrom = config.get('MAIL_FROM', { infer: true });
+    const smtpUser = config.get('SMTP_USER', { infer: true });
+    this.from = configuredFrom.includes('yourgmail@gmail.com') && smtpUser
+      ? `SAZU Marketplace <${smtpUser}>`
+      : configuredFrom;
     this.isProd = config.get('NODE_ENV', { infer: true }) === 'production';
     const host = config.get('SMTP_HOST', { infer: true });
     if (host) {
-      const user = config.get('SMTP_USER', { infer: true });
       this.transport = createTransport({
         host,
         port: config.get('SMTP_PORT', { infer: true }),
         secure: config.get('SMTP_PORT', { infer: true }) === 465,
-        auth: user ? { user, pass: config.get('SMTP_PASSWORD', { infer: true }) } : undefined,
+        connectionTimeout: 15_000,
+        greetingTimeout: 15_000,
+        socketTimeout: 15_000,
+        auth: smtpUser ? { user: smtpUser, pass: config.get('SMTP_PASSWORD', { infer: true }) } : undefined,
       });
     }
   }
 
-  /** Start delivery without making account or password flows wait on the SMTP server. */
+  /** Deliver the message and surface failures so account and verification flows do not claim success without a send. */
   async send(msg: MailMessage): Promise<void> {
-    try {
-      const transport = this.transport;
-      if (transport) {
-        void this.deliver(transport, msg);
-      } else if (!this.isProd) {
-        // Development only: no SMTP configured, so print the message (links included) to the API log.
-        this.logger.warn(`DEV MAIL (SMTP not configured)\nTo: ${msg.to}\nSubject: ${msg.subject}\n${msg.text}`);
-      } else {
-        this.logger.error('SMTP is not configured; email not sent');
-      }
-    } catch (err) {
-      this.logger.error(`Email delivery failed: ${(err as Error).message}`);
+    const transport = this.transport;
+    if (transport) {
+      await this.deliver(transport, msg);
+      return;
     }
+    if (!this.isProd) {
+      // Development only: no SMTP configured, so print the message (code included) to the API log.
+      this.logger.warn(`DEV MAIL (SMTP not configured)\nTo: ${msg.to}\nSubject: ${msg.subject}\n${msg.text}`);
+      return;
+    }
+    this.logger.error('SMTP is not configured; email not sent');
+    throw new Error('Email delivery is unavailable.');
   }
 
   private async deliver(transport: Transporter, msg: MailMessage): Promise<void> {
@@ -53,6 +58,7 @@ export class MailService {
       await transport.sendMail({ from: this.from, ...msg });
     } catch (err) {
       this.logger.error(`Email delivery failed: ${(err as Error).message}`);
+      throw new Error('Email could not be sent. Please try again.');
     }
   }
 }

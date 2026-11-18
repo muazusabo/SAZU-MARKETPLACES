@@ -8,7 +8,7 @@ import { MULTER_HARD_LIMIT } from '../common/upload';
 import { AdminCatalogService } from './admin-catalog.service';
 import { AdminUsersService } from './admin-users.service';
 import {
-  AdminUsersQuery, AttributeDto, AuditQuery, CreateCategoryDto, GrantRoleDto, SetUserStatusDto, StudentVerificationDto, UpdateAttributeDto, UpdateCategoryDto, UpdateSettingDto,
+  AdminUsersQuery, AttributeDto, AuditQuery, CreateCategoryDto, EmailVerificationDto, GrantRoleDto, SetUserStatusDto, StudentVerificationDto, UpdateAttributeDto, UpdateCategoryDto, UpdateSettingDto,
 } from './dto/admin.dto';
 
 const uuid = () => new ParseUUIDPipe({ version: '4' });
@@ -38,6 +38,9 @@ export class AdminManagementController {
 
   @Patch('users/:id/student-verification') @ApiOperation({ summary: 'Record an administrator’s student-verification decision' })
   verification(@CurrentUser() u: AuthUser, @Param('id', uuid()) id: string, @Body() dto: StudentVerificationDto) { return this.users.setStudentVerification(u.id, id, dto.status, dto.note); }
+
+  @Patch('users/:id/email-verification') @ApiOperation({ summary: 'Verify or unverify a user email address for account and seller access' })
+  emailVerification(@CurrentUser() u: AuthUser, @Param('id', uuid()) id: string, @Body() dto: EmailVerificationDto) { return this.users.setEmailVerification(u.id, id, dto.verified, dto.note); }
 
   @Get('categories') categories() { return this.catalog.categories(); }
   @Get('categories/:id') category(@Param('id', uuid()) id: string) { return this.catalog.category(id); }

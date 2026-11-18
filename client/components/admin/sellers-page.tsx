@@ -27,6 +27,11 @@ function Row({ s }: { s: AdminSeller }) {
     try { await adminApi.setVerified(s.id, !s.verified); toast.success(s.verified ? 'Verified badge removed.' : 'Marked as a verified seller.'); await refresh(); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   }
+  async function verifyEmail() {
+    setBusy(true);
+    try { await adminApi.emailVerification(s.user.id, true, 'Verified by an administrator for seller approval.'); toast.success('Seller email verified.'); await refresh(); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  }
   return (
     <li className="grid gap-2 rounded-lg border bg-card p-4">
       <p className="flex flex-wrap items-center gap-2"><span className="text-lg font-bold">{s.shopName}</span><Badge variant={s.status === 'approved' ? 'success' : s.status === 'pending' ? 'warning' : 'destructive'}>{s.status}</Badge>
@@ -36,6 +41,7 @@ function Row({ s }: { s: AdminSeller }) {
       <p className="text-sm text-muted-foreground">Categories: {s.categories.join(', ') || 'none'}</p>
       {s.reviewNote && <p className="text-sm text-muted-foreground">Last note: “{s.reviewNote}”</p>}
       <div className="flex flex-wrap items-start gap-2">
+        {!s.user.emailVerified && user?.roles.includes('admin') && <Button size="sm" variant="outline" disabled={busy} onClick={verifyEmail}>Verify email</Button>}
         {s.status === 'pending' && <>
           <ReasonAction label="Approve" variant="default" required={false} confirmLabel="Approve seller" onSubmit={decide('approve', 'Seller approved.')} />
           <ReasonAction label="Reject" destructive hint="The applicant will see this reason." onSubmit={decide('reject', 'Application rejected.')} />

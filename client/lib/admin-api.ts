@@ -67,6 +67,7 @@ export const adminApi = {
   grantModerator: (id: string) => authedFetch<AdminUser>(`/admin/users/${id}/roles`, jsonBody('POST', { role: 'moderator' })),
   revokeModerator: (id: string) => authedFetch<AdminUser>(`/admin/users/${id}/roles/moderator`, jsonBody('DELETE')),
   studentVerification: (id: string, status: string) => authedFetch<AdminUser>(`/admin/users/${id}/student-verification`, jsonBody('PATCH', { status })),
+  emailVerification: (id: string, verified: boolean, note?: string) => authedFetch<AdminUser>(`/admin/users/${id}/email-verification`, jsonBody('PATCH', { verified, note })),
 
   categories: () => authedFetch<AdminCategory[]>('/admin/categories'),
   category: (id: string) => authedFetch<AdminCategory>(`/admin/categories/${id}`),

@@ -145,11 +145,19 @@ export class SellerAccountService {
    * Suspending or rejecting hides every listing automatically because public visibility requires an approved seller.
    */
   async review(sellerId: string, decision: Decision, note?: string): Promise<{ status: string }> {
-    const { rows } = await this.db.query<{ status: string; user_id: string }>('SELECT status, user_id FROM seller_profiles WHERE id = $1', [sellerId]);
+    const { rows } = await this.db.query<{ status: string; user_id: string; email_verified: boolean }>(
+      `SELECT s.status, s.user_id, (u.email_verified_at IS NOT NULL) AS email_verified
+       FROM seller_profiles s JOIN users u ON u.id = s.user_id
+       WHERE s.id = $1`,
+      [sellerId],
+    );
     const s = rows[0];
     if (!s) throw new NotFoundException('Seller not found.');
     const allowed: Record<Decision, string[]> = { approve: ['pending'], reject: ['pending'], suspend: ['approved'], reinstate: ['suspended'] };
     if (!allowed[decision].includes(s.status)) throw new ConflictException(`Cannot ${decision} a seller whose status is "${s.status}".`);
+    if ((decision === 'approve' || decision === 'reinstate') && !s.email_verified) {
+      throw new BadRequestException('Verify the seller’s email address before approving or reinstating the seller account.');
+    }
     if ((decision === 'reject' || decision === 'suspend') && !note?.trim()) throw new BadRequestException('A reason is required so the seller can understand the decision.');
     const next = { approve: 'approved', reject: 'rejected', suspend: 'suspended', reinstate: 'approved' }[decision];
     await this.db.transaction(async (c) => {
