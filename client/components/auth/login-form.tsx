@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { ArrowRight, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
@@ -34,17 +35,23 @@ export function LoginForm() {
   }
 
   return (
-    <AuthShell title="Sign in" intro="Use your SAZU Marketplace account to message sellers and manage your listings.">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4">
-        {next !== '/' && <p role="status" className="rounded-md border bg-secondary/60 p-3 text-sm text-muted-foreground">Sign in to return to your previous page. If you were editing a listing or shop application, your saved draft on this device will be restored.</p>}
+    <AuthShell branded title="Welcome back" intro="Sign in to pick up where you left off.">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5">
+        {next !== '/' && <p role="status" className="rounded-2xl border border-primary/10 bg-brand-light-lime/40 p-4 text-sm leading-relaxed text-brand-deep">Sign in to return to your previous page. Any saved listing or shop draft on this device will be restored.</p>}
         <FormError message={error} />
-        <TextField label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
-        <TextField label="Password" type="password" autoComplete="current-password" error={errors.password?.message} {...register('password')} />
-        <Button type="submit" size="lg" disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</Button>
+        <TextField className="gap-2" label="Email address" type="email" autoComplete="email" placeholder="you@example.com" error={errors.email?.message} {...register('email')} />
+        <TextField className="gap-2" label="Password" type="password" autoComplete="current-password" placeholder="Enter your password" error={errors.password?.message} {...register('password')} />
+        <div className="-mt-1 flex justify-end">
+          <Link href="/forgot-password" className="text-sm font-semibold text-primary decoration-primary/30 underline-offset-4 hover:underline">Forgot password?</Link>
+        </div>
+        <Button type="submit" size="lg" disabled={isSubmitting} className="group mt-1 h-12 w-full rounded-xl shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:shadow-xl">
+          <LockKeyhole aria-hidden className="size-4" />
+          {isSubmitting ? 'Signing in…' : 'Sign in to SAZU'}
+          {!isSubmitting && <ArrowRight aria-hidden className="ml-auto size-4 transition-transform group-hover:translate-x-1" />}
+        </Button>
       </form>
-      <div className="grid gap-2 text-sm">
-        <Link href="/forgot-password" className="font-semibold text-primary hover:underline">Forgot your password?</Link>
-        <p className="text-muted-foreground">New here? <Link href={`/register${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-primary hover:underline">Create an account</Link></p>
+      <div className="mt-7 border-t border-border pt-5 text-center text-sm">
+        <p className="text-muted-foreground">New to SAZU? <Link href={`/register${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-bold text-primary decoration-primary/30 underline-offset-4 hover:underline">Create your account</Link></p>
       </div>
     </AuthShell>
   );
