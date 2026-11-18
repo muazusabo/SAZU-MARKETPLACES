@@ -68,7 +68,20 @@ function ProfileForm({ user }: { user: Me }) {
 
 function VerifyBanner() {
   const [sending, setSending] = useState(false);
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const verification = useQuery({
+    queryKey: ['email-verification-refresh', user?.id],
+    queryFn: () => authedFetch<Me>('/users/me'),
+    enabled: Boolean(user && !user.emailVerified),
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+  });
+  useEffect(() => {
+    if (verification.data?.emailVerified) {
+      setUser(verification.data);
+      toast.success('Your email has been verified by an administrator.');
+    }
+  }, [setUser, verification.data]);
   if (!user || user.emailVerified) return null;
   return (
     <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-l-4 border-accent bg-card p-4">
@@ -77,7 +90,7 @@ function VerifyBanner() {
       <Button size="sm" variant="outline" disabled={sending} onClick={async () => {
         setSending(true);
         try { await apiFetch('/auth/resend-verification', jsonBody('POST', { email: user.email })); toast.success('Verification email sent.'); }
-        catch { toast.error('Could not send the email. Try again shortly.'); }
+        catch (error) { toast.error(error instanceof ApiError ? error.message : 'Could not send the email. Try again shortly.'); }
         finally { setSending(false); }
       }}>Resend email</Button>
     </div>
