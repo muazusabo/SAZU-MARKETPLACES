@@ -18,8 +18,8 @@ export function AuthShell({
       <main className="container relative isolate grid min-h-[calc(100svh-8rem)] place-items-center overflow-hidden py-8 sm:py-12">
         <div aria-hidden className="pointer-events-none absolute -left-28 top-16 -z-10 size-72 rounded-full bg-brand-light-lime/70 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -right-24 bottom-8 -z-10 size-80 rounded-full bg-brand-cream blur-3xl" />
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-brand-deep/10 bg-white shadow-[0_28px_90px_-40px_rgba(6,78,59,0.38)] lg:grid-cols-[0.92fr_1.08fr]">
-          <aside className="relative isolate overflow-hidden bg-brand-deep px-6 py-7 text-white sm:px-9 sm:py-9 lg:flex lg:min-h-[650px] lg:flex-col lg:justify-between lg:px-11 lg:py-11">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-brand-deep/10 bg-white shadow-[0_28px_90px_-40px_rgba(6,78,59,0.38)] md:grid-cols-[0.82fr_1.18fr]">
+          <aside className="relative isolate overflow-hidden bg-brand-deep px-6 py-7 text-white sm:px-9 sm:py-9 md:flex md:min-h-[650px] md:flex-col md:justify-between md:px-8 md:py-9 lg:px-11 lg:py-11">
             <div aria-hidden className="absolute -right-20 -top-20 -z-10 size-64 rounded-full border-[36px] border-white/[0.04]" />
             <div aria-hidden className="absolute -bottom-28 -left-24 -z-10 size-72 rounded-full border-[44px] border-brand-lime/10" />
             <div>
