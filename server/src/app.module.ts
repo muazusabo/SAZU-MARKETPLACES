@@ -22,6 +22,7 @@ import { ReportsModule } from './reports/reports.module';
 import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AdvertisementsModule } from './advertisements/advertisements.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
@@ -55,6 +56,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
     ReportsModule,
     AdminModule,
     AnalyticsModule,
+    AdvertisementsModule,
     HealthModule,
   ],
   // Order matters: authenticate first (private by default) so rate limits can count per user, then limit, then check roles.

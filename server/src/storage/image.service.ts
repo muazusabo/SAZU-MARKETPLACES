@@ -61,6 +61,16 @@ export class ImageService {
     }
   }
 
+  async processAdvertisementBanner(input: Buffer, allowed?: string[]): Promise<Buffer> {
+    this.assertImage(input, allowed);
+    try {
+      return await sharp(input, { limitInputPixels: 50_000_000, failOn: 'error' }).rotate()
+        .resize({ width: 2000, height: 800, fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    } catch {
+      throw new BadRequestException('That file could not be read as a valid image.');
+    }
+  }
+
   private assertImage(input: Buffer, allowed?: string[]) {
     const kind = sniffImage(input);
     if (!kind) throw new BadRequestException('Only JPEG, PNG or WebP images are allowed.');
