@@ -41,7 +41,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Create an account. Same response whether or not the email already exists.' })
   async register(@Body() dto: RegisterDto) {
     await this.auth.register(dto);
-    return { message: 'If this email can be used, a verification message is on its way.' };
+    return { message: 'If this email can be used, your registration request was received.' };
   }
 
   @Post('login')

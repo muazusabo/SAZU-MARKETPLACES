@@ -31,6 +31,7 @@ describe('Auth, profiles and permissions (real PostgreSQL)', () => {
   let pool: Pool;
   let db: DatabaseService;
   const outbox: MailMessage[] = [];
+  let failMailDelivery = false;
   const tokenFrom = (m?: MailMessage) => m?.text.match(/token=([\w-]+)/)?.[1] ?? '';
   const codeFrom = (m?: MailMessage) => m?.text.match(/verification code:\s*\n\n(\d{8})/i)?.[1] ?? '';
   const lastMail = (to: string) => [...outbox].reverse().find((m) => m.to === to);
@@ -39,7 +40,12 @@ describe('Auth, profiles and permissions (real PostgreSQL)', () => {
     await runner({ databaseUrl: TEST_DB, dir: join(__dirname, '../migrations'), direction: 'up', migrationsTable: 'pgmigrations', count: Infinity, log: () => undefined });
     pool = new Pool({ connectionString: TEST_DB });
     const mod = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(MailService).useValue({ send: async (m: MailMessage) => void outbox.push(m) })
+      .overrideProvider(MailService).useValue({
+        send: async (m: MailMessage) => {
+          if (failMailDelivery) throw new Error('SMTP unavailable');
+          outbox.push(m);
+        },
+      })
       .compile();
     app = mod.createNestApplication();
     configureApp(app);
@@ -47,7 +53,7 @@ describe('Auth, profiles and permissions (real PostgreSQL)', () => {
     db = app.get(DatabaseService);
   });
   afterAll(async () => { await app.close(); await pool.end(); });
-  beforeEach(async () => { outbox.length = 0; await pool.query('TRUNCATE users CASCADE'); });
+  beforeEach(async () => { failMailDelivery = false; outbox.length = 0; await pool.query('TRUNCATE users CASCADE'); });
 
   const api = () => request(app.getHttpServer());
   async function registerAndVerify(over: Record<string, unknown> = {}) {
@@ -82,6 +88,17 @@ describe('Auth, profiles and permissions (real PostgreSQL)', () => {
       expect(second.body.data.message).toMatch(/If this email can be used/);
       expect((await pool.query('SELECT 1 FROM users')).rowCount).toBe(1);
       expect(lastMail('amina@example.com')?.subject).toMatch(/already|Someone tried/i);
+    });
+
+    it('keeps account creation successful when email delivery fails and allows the user to request another code', async () => {
+      failMailDelivery = true;
+      await api().post('/api/v1/auth/register').send(validBody()).expect(202);
+      expect((await pool.query('SELECT 1 FROM users WHERE email = $1', ['amina@example.com'])).rowCount).toBe(1);
+      expect(outbox).toHaveLength(0);
+
+      failMailDelivery = false;
+      await api().post('/api/v1/auth/resend-verification').send({ email: 'amina@example.com' }).expect(202);
+      expect(codeFrom(lastMail('amina@example.com'))).toMatch(/^\d{8}$/);
     });
 
     it.each([

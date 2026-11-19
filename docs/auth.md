@@ -1,7 +1,7 @@
 # Authentication and authorization (Phase 2)
 
 ## Flow
-- **Register** (`POST /auth/register`) always answers 202 with the same message, whether or not the email exists (an existing owner gets an informational email instead), so it cannot be used to enumerate accounts. Passwords: 10-128 chars, hashed with argon2id.
+- **Register** (`POST /auth/register`) always answers 202 with the same message, whether or not the email exists (an existing owner gets an informational email instead), so it cannot be used to enumerate accounts. After registration the web app signs the user in and routes them to their dashboard without requiring email verification first. Users can verify their email from the dashboard when they want to apply as a seller; administrators can verify a user's email or review their student-verification request. Mail delivery failure does not undo account creation, and users can request another code from the dashboard. Passwords: 10-128 chars, hashed with argon2id.
 - **Email verification**: single-use, randomly generated 8-digit code, stored as a SHA-256 hash, expires in 10 minutes, and is invalidated on resend. Five incorrect guesses consume the code; verification and resend are rate-limited. Login works before verification, but `emailVerified` is exposed and `@RequireVerifiedEmail()` gates features (seller application and messaging). Email verification is separate from student-affiliation verification.
 - **Login** returns a 15-minute JWT access token (kept in browser memory only) and sets an `httpOnly` refresh cookie scoped to `/api/v1/auth`. Same error for wrong password and unknown email, with equalised timing. 5 failures lock the account for 15 minutes. Per-IP throttling on every credential endpoint.
 - **Refresh tokens** are opaque, stored only as hashes, and rotate on every use. Replaying an already-rotated token (outside a 10 s grace for parallel tabs) revokes the entire chain.
@@ -17,7 +17,7 @@
 ## Web dashboard routing
 - After login, administrators and moderators default to `/admin`, seller accounts default to `/dashboard` (where seller status is checked), and buyers default to `/account`.
 - A safe, authorized same-site `next` destination is preserved. Buyers cannot be redirected into admin or seller-only dashboard routes, and moderators are redirected away from administrator-only sections.
-- Signed-in users visiting login or registration are redirected to their role-appropriate destination. New registrations may sign in before confirming email; email confirmation remains available and is still required for seller applications and messaging.
+- Signed-in users visiting login or registration are redirected to their role-appropriate destination. New registrations are signed in and routed to their dashboard before confirming email; email confirmation remains available from the dashboard and is still required for seller applications and messaging.
 
 ## Student verification
 Signed-in users can request student-affiliation review from their `/account` dashboard without first confirming their email. Requests move an unverified or previously rejected profile to `pending`; duplicate pending requests and requests from already verified users are rejected. Administrators can find pending requests in the user list and mark them verified or rejected. No evidence upload is currently supported.

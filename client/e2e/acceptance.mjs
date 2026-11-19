@@ -23,8 +23,10 @@ async function register(page, { full, display, email }) {
   await fill(page, 'Full name', full); await fill(page, 'Display name', display); await fill(page, 'Email', email);
   await fill(page, 'Password', PASSWORD); await fill(page, 'Phone (optional)', '0803 123 4567');
   await clickLabelText(page, 'I agree to the');
-  await clickText(page, 'Create account', { selector: 'button[type=submit]' });
-  await waitText(page, 'Check your email');
+  await clickText(page, 'Create your account', { selector: 'button[type=submit]' });
+  await waitFor(() => new URL(page.url()).pathname === '/account', { what: 'redirect to the account dashboard' });
+  await waitText(page, 'Personal dashboard');
+  await waitText(page, 'Verify');
 }
 async function verifyEmail(page, email) {
   await page.goto(`${WEB}/verify-email?email=${encodeURIComponent(email)}`, { waitUntil: 'networkidle2' });
@@ -32,13 +34,6 @@ async function verifyEmail(page, email) {
   await clickText(page, 'Verify email', { selector: 'button[type=submit]' });
   await waitText(page, 'Your email is verified.');
 }
-async function login(page, email) {
-  await page.goto(`${WEB}/login`, { waitUntil: 'networkidle2' });
-  await fill(page, 'Email', email); await fill(page, 'Password', PASSWORD);
-  await clickText(page, 'Sign in', { selector: 'button[type=submit]' });
-  await waitFor(() => !page.url().includes('/login'), { what: 'redirect after sign-in' });
-}
-
 const browser = await launch();
 let exitCode = 0;
 try {
@@ -52,7 +47,6 @@ try {
     await register(student.page, { full: 'Aisha Bello', display: 'Aisha', email: S });
     await shot(student.page, '01-registered');
     await verifyEmail(student.page, S);
-    await login(student.page, S);
     await waitFor(async () => hasText(student.page, 'Aisha'), { what: 'display name in header' });
   });
 
@@ -72,7 +66,7 @@ try {
     await register(admin.page, { full: 'Admin Person', display: 'Admin', email: A });
     await verifyEmail(admin.page, A);
     runCli('dist/cli/grant-role.js', [A, 'admin']); // the first administrator is created server-side by design
-    await login(admin.page, A);
+    await admin.page.reload({ waitUntil: 'networkidle2' }); // refresh the session's role claims after the server-side grant
     await admin.page.goto(`${WEB}/admin/sellers`, { waitUntil: 'networkidle2' });
     await waitText(admin.page, SHOP);
     await shot(admin.page, '03-admin-sellers');
@@ -129,7 +123,6 @@ try {
   await step(7, 'Another student (the buyer) opens the product from the card', async () => {
     await register(buyer.page, { full: 'Musa Ali', display: 'Musa', email: B });
     await verifyEmail(buyer.page, B);
-    await login(buyer.page, B);
     await buyer.page.goto(WEB, { waitUntil: 'networkidle2' });
     await buyer.page.type('#hero-search', stamp);
     await buyer.page.keyboard.press('Enter');

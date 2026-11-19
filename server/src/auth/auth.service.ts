@@ -1,4 +1,4 @@
-import { ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { Env } from '../config/env';
@@ -15,6 +15,7 @@ const RESET_TTL_MIN = 60;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private dummyHash?: Promise<string>;
   private readonly webUrl: string;
 
@@ -50,16 +51,29 @@ export class AuthService {
       });
     } catch (err) {
       if ((err as { code?: string }).code === '23505') {
-        await this.mail.send({
-          to: dto.email,
-          subject: 'Someone tried to register with your email on SAZU Marketplace',
-          text: `Hello,\n\nSomeone tried to create a SAZU Marketplace account with this email address, but an account already exists.\nIf this was you, sign in or reset your password: ${this.webUrl}/forgot-password\nIf it wasn't you, you can ignore this message.\n`,
-        });
+        try {
+          await this.mail.send({
+            to: dto.email,
+            subject: 'Someone tried to register with your email on SAZU Marketplace',
+            text: `Hello,\n\nSomeone tried to create a SAZU Marketplace account with this email address, but an account already exists.\nIf this was you, sign in or reset your password: ${this.webUrl}/forgot-password\nIf it wasn't you, you can ignore this message.\n`,
+          });
+        } catch (mailError) {
+          this.logRegistrationMailFailure(mailError);
+        }
         return;
       }
       throw err;
     }
-    await this.sendVerification(userId, dto.email, dto.displayName);
+    try {
+      await this.sendVerification(userId, dto.email, dto.displayName);
+    } catch (mailError) {
+      this.logRegistrationMailFailure(mailError);
+    }
+  }
+
+  private logRegistrationMailFailure(error: unknown): void {
+    const detail = error instanceof Error ? error.message : 'Unknown mail delivery error';
+    this.logger.error(`Registration was processed, but its email notification failed: ${detail}`);
   }
 
   private async sendVerification(userId: string, email: string, name: string) {

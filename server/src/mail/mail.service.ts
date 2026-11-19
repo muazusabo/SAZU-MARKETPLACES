@@ -55,7 +55,10 @@ export class MailService {
 
   private async deliver(transport: Transporter, msg: MailMessage): Promise<void> {
     try {
-      await transport.sendMail({ from: this.from, ...msg });
+      const result = await transport.sendMail({ from: this.from, ...msg });
+      if (!result.accepted?.length || result.rejected?.length) {
+        throw new Error('SMTP server did not accept the recipient');
+      }
     } catch (err) {
       this.logger.error(`Email delivery failed: ${(err as Error).message}`);
       throw new Error('Email could not be sent. Please try again.');

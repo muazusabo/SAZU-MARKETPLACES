@@ -42,4 +42,11 @@ describe('MailService', () => {
       ...message,
     });
   });
+
+  it('surfaces a recipient rejected by SMTP even when sendMail resolves', async () => {
+    const service = new MailService(config);
+    sendMail.mockResolvedValue({ accepted: [], rejected: ['buyer@example.com'] });
+
+    await expect(service.send(message)).rejects.toThrow('Email could not be sent. Please try again.');
+  });
 });

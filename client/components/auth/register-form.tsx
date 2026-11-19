@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ArrowRight, MailCheck, UserRoundPlus } from 'lucide-react';
+import { ArrowRight, UserRoundPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
@@ -20,7 +20,7 @@ export function RegisterForm() {
   const params = useSearchParams();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [doneEmail, setDoneEmail] = useState<string | null>(null);
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { phone: '', campusArea: '', acceptTerms: false },
@@ -47,28 +47,22 @@ export function RegisterForm() {
       toast.success(`Welcome to SAZU, ${user.profile.displayName}.`);
       router.replace(postAuthPathForUser(user, params.get('next')));
     } catch {
-      setDoneEmail(v.email);
+      setCreatedEmail(v.email);
     }
   }
 
-  if (doneEmail) {
+  if (createdEmail) {
+    const loginParams = new URLSearchParams({ email: createdEmail });
+    const next = params.get('next');
+    if (next) loginParams.set('next', next);
     return (
-      <AuthShell branded title="One last step" intro="We sent a verification code to finish setting up your account.">
-        <div className="rounded-2xl border border-primary/10 bg-brand-light-lime/35 p-5" role="status">
-          <span className="grid size-11 place-items-center rounded-2xl bg-white text-primary shadow-sm">
-            <MailCheck aria-hidden className="size-6" />
-          </span>
-          <p className="mt-4 leading-relaxed">
-            If <strong>{doneEmail}</strong> can be used for a new account, we’ll send an 8-digit verification code. It stays valid for 10 minutes.
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">No email yet? Check your spam folder or request another code from the verification screen.</p>
-        </div>
-        <div className="mt-5 grid gap-3">
-          <Button asChild size="lg" className="h-12 w-full rounded-xl">
-            <Link href={`/verify-email?email=${encodeURIComponent(doneEmail)}`}>Enter verification code <ArrowRight aria-hidden /></Link>
-          </Button>
-          <Button asChild variant="outline" className="h-11 w-full rounded-xl"><Link href="/login">Go to sign in</Link></Button>
-        </div>
+      <AuthShell branded title="Continue to SAZU" intro="We couldn't sign you in automatically.">
+        <p role="status" className="rounded-2xl border border-primary/10 bg-brand-light-lime/35 p-5 leading-relaxed">
+          Sign in with your account details to continue. If you already have an account, use its existing password.
+        </p>
+        <Button asChild size="lg" className="mt-5 h-12 w-full rounded-xl">
+          <Link href={`/login?${loginParams.toString()}`}>Sign in to your account <ArrowRight aria-hidden /></Link>
+        </Button>
       </AuthShell>
     );
   }

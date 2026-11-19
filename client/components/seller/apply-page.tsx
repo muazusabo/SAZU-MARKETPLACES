@@ -22,8 +22,9 @@ function Inner() {
     return (
       <div className="container max-w-2xl py-12"><div role="status" className="rounded-lg border bg-card p-6">
         <h1 className="text-2xl font-bold">Verify your email first</h1>
-        <p className="mt-2 text-muted-foreground">We need a confirmed email address before you can apply. Open your account page to enter a verification code.</p>
-        <Button asChild className="mt-4"><Link href="/account">Go to your account</Link></Button>
+        <p className="mt-2 text-muted-foreground">We need a confirmed email address before you can apply. Enter the code from your email to continue.</p>
+        <Button asChild className="mt-4"><Link href={`/verify-email?email=${encodeURIComponent(user.email)}&next=${encodeURIComponent('/sell/apply')}`}>Verify your email</Link></Button>
+        <Button asChild variant="outline" className="mt-4 sm:ml-2"><Link href="/account">Go to your account</Link></Button>
       </div></div>
     );
   }

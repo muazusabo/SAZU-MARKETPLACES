@@ -19,7 +19,10 @@ export function LoginForm() {
   const params = useSearchParams();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: params.get('email') ?? '', password: '' },
+  });
   const requestedNext = params.get('next');
   const next = safeNextPath(requestedNext);
 

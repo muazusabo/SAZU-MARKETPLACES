@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { apiFetch, ApiError } from '@/lib/api';
 import { jsonBody } from '@/lib/auth-client';
+import { safeNextPath } from '@/lib/validation';
 import { AuthShell } from './auth-shell';
 import { useAuth } from './auth-provider';
 
 export function VerifyEmail() {
   const params = useSearchParams();
   const initialEmail = params.get('email') ?? '';
+  const requestedNext = params.get('next');
+  const continuePath = safeNextPath(requestedNext, '/account');
   const expiredLink = params.get('reason') === 'expired';
   const { status: authStatus, reload } = useAuth();
   const [email, setEmail] = useState(initialEmail);
@@ -20,6 +23,8 @@ export function VerifyEmail() {
   const [state, setState] = useState<'idle' | 'verifying' | 'resending' | 'ok' | 'failed' | 'sent'>('idle');
   const [message, setMessage] = useState('');
   const needsFreshCode = expiredLink || (state === 'failed' && /expired|invalid/i.test(message));
+  const loginParams = new URLSearchParams({ email });
+  if (requestedNext) loginParams.set('next', requestedNext);
 
   async function verify(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,11 +55,11 @@ export function VerifyEmail() {
   }
 
   return (
-    <AuthShell title="Verify your email" intro="Enter the 8-digit code we sent to your email address. It expires in 10 minutes.">
+    <AuthShell title="Verify your email" intro="Enter the 8-digit code sent to your email address. It expires in 10 minutes. If it has not arrived, check your spam folder or request another code below.">
       {state === 'ok' ? (
         <>
           <p role="status" className="flex items-center gap-2 rounded-lg border bg-card p-5"><CheckCircle2 aria-hidden className="text-success" /> Your email is verified.</p>
-          <Button asChild><Link href={authStatus === 'authenticated' ? '/account' : '/login'}>{authStatus === 'authenticated' ? 'Continue to your account' : 'Continue to sign in'}</Link></Button>
+          <Button asChild><Link href={authStatus === 'authenticated' ? continuePath : `/login?${loginParams.toString()}`}>{authStatus === 'authenticated' ? 'Continue' : 'Continue to sign in'}</Link></Button>
         </>
       ) : (
         <>
