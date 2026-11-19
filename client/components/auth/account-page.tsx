@@ -379,7 +379,7 @@ function AccountContent() {
                     <>
                       {item.imageUrl
                         // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={item.imageUrl} alt="" className="size-14 shrink-0 rounded-xl bg-muted object-cover" />
+                        ? <img src={item.imageUrl} alt="" className="size-14 shrink-0 rounded-xl bg-muted object-contain" />
                         : <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground"><ImageOff className="size-5" /></span>}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-bold">{item.title}</span>

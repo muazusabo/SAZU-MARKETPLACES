@@ -1,7 +1,10 @@
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, BadgeCheck, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
+import { AvailabilityBadge } from '@/components/marketplace/availability-badge';
 import { formatNairaFromKobo } from '@/lib/format';
+import { CONDITION_LABELS } from '@/lib/labels';
 import type { ProductCardData } from '@/lib/marketplace';
 import { ProductImage } from '@/components/marketplace/product-image';
 
@@ -19,8 +22,20 @@ export function HomeProductCard({ product }: { product: ProductCardData }) {
             {product.title}
           </Link>
         </h3>
-        <p className="mt-2 text-lg font-extrabold leading-none text-primary">{formatNairaFromKobo(product.priceKobo)}</p>
-        <p className="mt-2 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+        <p className="mt-2 text-base font-extrabold leading-tight text-primary sm:text-lg">{formatNairaFromKobo(product.priceKobo)}</p>
+        <div className="flex flex-wrap gap-1">
+          {product.availability !== 'available' && <AvailabilityBadge availability={product.availability} />}
+          {product.condition && <Badge>{CONDITION_LABELS[product.condition] ?? product.condition}</Badge>}
+          {product.productType === 'service' && <Badge variant="warning">Service</Badge>}
+        </div>
+        <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground" title={product.seller.shopName}>
+          <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary text-[10px] font-bold text-primary">
+            {product.seller.shopName.slice(0, 1).toUpperCase()}
+          </span>
+          <span className="truncate">{product.seller.shopName}</span>
+          {product.seller.verified && <BadgeCheck aria-label="Verified seller" className="size-3.5 shrink-0 text-success" />}
+        </p>
+        <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted-foreground" title={product.campusLocation || 'SAZU campus'}>
           <MapPin aria-hidden className="size-3.5 shrink-0" />
           <span className="truncate">{product.campusLocation || 'SAZU campus'}</span>
         </p>

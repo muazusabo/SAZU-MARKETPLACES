@@ -131,7 +131,7 @@ function Content({ id }: { id: string }) {
         <section aria-label="Listing" className="mt-3 flex items-center gap-3 rounded-lg border bg-card p-3">
           {p.imageUrl
             // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={p.imageUrl} alt="" className="size-14 shrink-0 rounded-md bg-muted object-cover" />
+            ? <img src={p.imageUrl} alt="" className="size-14 shrink-0 rounded-md bg-muted object-contain" />
             : <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><ImageOff /></span>}
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold">{p.href ? <Link href={p.href} className="hover:underline">{p.title}</Link> : p.title}</p>

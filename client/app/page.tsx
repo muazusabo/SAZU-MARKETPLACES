@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Armchair, BookOpen, BedDouble, Gamepad2, Handshake, MessageCircle, Search, Shirt, Smartphone, UtensilsCrossed, Wrench } from 'lucide-react';
+import { ArrowRight, BookOpen, Handshake, MessageCircle, Search } from 'lucide-react';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { HomeListings } from '@/components/home/home-listings';
@@ -8,18 +8,19 @@ import { SearchForm } from '@/components/home/search-form';
 import { GridSkeleton } from '@/components/marketplace/product-grid';
 import { fetchFreshPublicContent, PublicContent } from '@/lib/content';
 import { fetchCategories } from '@/lib/marketplace';
+import { CATEGORIES } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
-const HOME_CATEGORIES = [
-  { slug: 'electronics', name: 'Electronics', Icon: Smartphone },
-  { slug: 'food-drinks', name: 'Food & Drinks', Icon: UtensilsCrossed },
-  { slug: 'books-study-materials', name: 'Books & Study Materials', Icon: BookOpen },
-  { slug: 'fashion-accessories', name: 'Fashion & Beauty', Icon: Shirt },
-  { slug: 'hostel-room-essentials', name: 'Hostel Essentials', Icon: BedDouble },
-  { slug: 'furniture', name: 'Furniture', Icon: Armchair },
-  { slug: 'sports-gaming', name: 'Sports & Gaming', Icon: Gamepad2 },
-  { slug: 'student-services', name: 'Student Services', Icon: Wrench },
+const HOME_CATEGORY_SLUGS = [
+  'electronics',
+  'food-drinks',
+  'books-study-materials',
+  'fashion-accessories',
+  'hostel-room-essentials',
+  'furniture',
+  'sports-gaming',
+  'student-services',
 ] as const;
 
 const STEPS = [
@@ -44,8 +45,12 @@ export default async function HomePage() {
       return {};
     }),
   ]);
-  const availableCategories = new Set(categories?.map((category) => category.slug) ?? []);
-  const visibleCategories = HOME_CATEGORIES.filter(({ slug }) => !categories || availableCategories.has(slug));
+  const visibleCategories = HOME_CATEGORY_SLUGS.flatMap((slug) => {
+    const platformCategory = CATEGORIES.find((category) => category.slug === slug);
+    const apiCategory = categories?.find((category) => category.slug === slug);
+    if (!platformCategory || (categories && !apiCategory)) return [];
+    return [{ slug, name: apiCategory?.name ?? platformCategory.name, Icon: platformCategory.icon }];
+  });
 
   return (
     <div className="pb-12">
