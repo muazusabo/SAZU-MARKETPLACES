@@ -27,7 +27,7 @@ function Row({ item, onRemove }: { item: WishlistItem; onRemove: (id: string) =>
     <li className="flex min-w-0 gap-3 overflow-hidden rounded-lg border bg-card p-3">
       {item.imageUrl
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={item.imageUrl} alt="" className={`size-24 shrink-0 rounded-md bg-muted object-cover ${dim ? 'opacity-60' : ''}`} />
+        ? <img src={item.imageUrl} alt="" className={`size-24 shrink-0 rounded-md bg-muted object-contain ${dim ? 'opacity-60' : ''}`} />
         : <span aria-hidden className="grid size-24 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><ImageOff /></span>}
       <div className="min-w-0 flex-1 break-words">
         <p className="flex flex-wrap items-center gap-2">

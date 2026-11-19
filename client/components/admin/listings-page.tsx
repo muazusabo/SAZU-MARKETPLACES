@@ -51,7 +51,7 @@ function Content() {
                   <li key={l.id} className="flex gap-3 rounded-lg border bg-card p-3">
                     {l.imageUrl
                       // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={l.imageUrl} alt="" className="size-20 shrink-0 rounded-md bg-muted object-cover" />
+                      ? <img src={l.imageUrl} alt="" className="size-20 shrink-0 rounded-md bg-muted object-contain" />
                       : <span aria-hidden className="grid size-20 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><ImageOff /></span>}
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-2"><Link href={`/admin/listings/${l.id}`} className="truncate font-bold hover:underline">{l.title}</Link><ListingStatusBadge status={l.status} availability={l.availability} />

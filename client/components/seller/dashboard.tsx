@@ -141,7 +141,7 @@ function Content({ shopName, verified, published, applicationSubmitted }: { shop
                     <li key={row.id} className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
                       {row.imageUrl
                         // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={row.imageUrl} alt="" className="size-20 shrink-0 rounded-md bg-muted object-cover" />
+                        ? <img src={row.imageUrl} alt="" className="size-20 shrink-0 rounded-md bg-muted object-contain" />
                         : <span aria-hidden className="grid size-20 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><ImageOff className="size-6" /></span>}
                       <div className="min-w-0 flex-1">
                         <p className="flex flex-wrap items-center gap-2"><span className="truncate font-bold">{row.title}</span><ListingStatusBadge status={row.status} availability={row.availability} /></p>

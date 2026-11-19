@@ -40,7 +40,7 @@ export function ProductImage({ image, className, priority = false }: {
           setFailedSource({ primary: image.url, usedFallback: sourceState?.usedFallback ?? false, unavailable: true });
         }
       }}
-      className={cn('bg-muted object-cover', className)}
+      className={cn('bg-muted object-contain', className)}
     />
   );
 }

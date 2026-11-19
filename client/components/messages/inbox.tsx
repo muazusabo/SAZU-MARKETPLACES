@@ -28,7 +28,7 @@ function Content() {
                   <Link href={`/messages/${c.id}`} className="flex gap-3 rounded-lg border bg-card p-3 transition-colors hover:border-primary">
                     {c.product?.imageUrl
                       // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={c.product.imageUrl} alt="" className="size-16 shrink-0 rounded-md bg-muted object-cover" />
+                      ? <img src={c.product.imageUrl} alt="" className="size-16 shrink-0 rounded-md bg-muted object-contain" />
                       : <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><ImageOff /></span>}
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center justify-between gap-2">

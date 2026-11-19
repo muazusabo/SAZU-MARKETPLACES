@@ -66,7 +66,7 @@ export function ImageManager({ listingId, images, disabled }: { listingId: strin
           {images.map((img, i) => (
             <li key={img.id} className="grid gap-2 rounded-lg border bg-card p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.thumbUrl} alt={img.alt || `Photo ${i + 1}`} className="aspect-[4/3] w-full rounded-md bg-muted object-cover" />
+              <img src={img.thumbUrl} alt={img.alt || `Photo ${i + 1}`} className="aspect-[4/3] w-full rounded-md bg-muted object-contain" />
               <label className="grid gap-1 text-xs font-semibold">Description for screen readers
                 <input defaultValue={img.alt} maxLength={200} disabled={disabled} onBlur={(e) => saveAlt(img, e.target.value)} className="h-9 rounded-md border border-input bg-card px-2 text-sm font-normal" />
               </label>
