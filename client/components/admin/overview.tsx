@@ -66,7 +66,7 @@ function Content() {
                 const href = 'href' in card ? card.href : undefined;
                 const { key, label, Icon, tone, detail } = card;
                 return (
-                  <div key={key} className="admin-metric-card group rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:p-5" style={{ animationDelay: `${index * 65}ms` }}>
+                  <div key={key} className="admin-metric-card group rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:p-5" style={{ animationDelay: `${index * 28}ms` }}>
                     <div className="flex items-start justify-between gap-3">
                       <span className={`grid size-11 place-items-center rounded-xl ${tone}`}>
                         <Icon aria-hidden className="size-5" />

@@ -45,7 +45,7 @@ export function ReasonAction({ label, confirmLabel, variant = 'outline', hint, r
   }
   if (!open) return <Button type="button" size="sm" variant={variant} disabled={disabled} onClick={() => setOpen(true)}>{label}</Button>;
   return (
-    <div className="grid w-full max-w-md gap-2 rounded-lg border bg-card p-3" role="group" aria-label={label}>
+    <div className="admin-form-panel grid w-full max-w-md gap-2 rounded-lg border bg-card p-3" role="group" aria-label={label}>
       <TextareaField label={required ? 'Reason (required)' : 'Note (optional)'} rows={2} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} hint={hint} />
       <div className="flex gap-2">
         <Button type="button" size="sm" className={cn(destructive && 'bg-destructive hover:bg-destructive/90')} disabled={busy} onClick={go}>{busy ? 'Working…' : confirmLabel ?? label}</Button>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ErrorState } from '@/components/marketplace/states';
 import { fetchCategories } from '@/lib/marketplace';
 import { CATEGORIES } from '@/lib/site';
+import { ScrollReveal } from '@/components/marketplace/scroll-reveal';
 
 export const metadata = { title: 'Categories', description: 'Browse every category on SAZU Marketplace.' };
 
@@ -13,11 +14,11 @@ export default async function CategoriesPage() {
     <div className="container py-10">
       <h1 className="text-3xl font-bold">Categories</h1>
       {!tree ? <div className="mt-6"><ErrorState message="We couldn’t load categories." /></div> : (
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ScrollReveal className="mt-6"><ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {tree.map((c) => {
             const Icon = CATEGORIES.find((x) => x.slug === c.slug)?.icon;
             return (
-              <li key={c.slug} className="rounded-lg border bg-card p-5">
+              <li key={c.slug} className="rounded-lg border bg-card p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md motion-reduce:transition-none">
                 <Link href={`/browse?category=${c.slug}`} className="flex items-center gap-3 font-display text-lg font-bold hover:underline">
                   {Icon && <span className="grid size-10 place-items-center rounded-md bg-secondary text-primary"><Icon aria-hidden className="size-5" /></span>}
                   {c.name}
@@ -33,7 +34,7 @@ export default async function CategoriesPage() {
               </li>
             );
           })}
-        </ul>
+        </ul></ScrollReveal>
       )}
     </div>
   );

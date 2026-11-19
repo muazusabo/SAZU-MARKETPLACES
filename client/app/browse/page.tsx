@@ -6,6 +6,8 @@ import { Pagination } from '@/components/marketplace/pagination';
 import { EmptyState, ErrorState } from '@/components/marketplace/states';
 import { hasActiveFilters, parseBrowseParams, toApiQuery, toUrlQuery, BrowseParams } from '@/lib/browse-params';
 import { CategoryNode, fetchCategories, fetchProducts } from '@/lib/marketplace';
+import { AdSlot } from '@/components/advertisements/ad-slot';
+import { ScrollReveal } from '@/components/marketplace/scroll-reveal';
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -51,8 +53,9 @@ async function Results({ params }: { params: BrowseParams }) {
   }
   return (
     <>
+      <AdSlot placement="sponsored_product" className="mb-5" />
       <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">{meta.total} {meta.total === 1 ? 'listing' : 'listings'}</p>
-      <ProductGrid products={items} headingLevel={2} />
+      <ScrollReveal className="mb-5"><ProductGrid products={items} headingLevel={2} /></ScrollReveal>
       <Pagination page={meta.page} totalPages={meta.totalPages} hrefFor={(n) => `/browse?${toUrlQuery(params, { page: n })}`} />
     </>
   );
@@ -65,6 +68,8 @@ export default async function BrowsePage({ searchParams }: { searchParams: SP })
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold">{heading}</h1>
+      <AdSlot placement="browse_banner" category={params.category} className="mt-5" />
+      {params.category && <AdSlot placement="category_banner" category={params.category} className="mt-4" />}
       <div className="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
         <BrowseFilters initial={params} categories={categories} />
         <section aria-label="Results">

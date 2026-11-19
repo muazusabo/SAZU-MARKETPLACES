@@ -64,10 +64,66 @@
     0% { opacity: 0.45; transform: translateY(0.35rem) scale(0.96); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
-  .admin-metric-card { animation: admin-card-enter 450ms both; }
+  @keyframes admin-page-enter {
+    from { opacity: 0; transform: translateY(0.45rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes admin-dialog-enter {
+    from { opacity: 0; transform: translateY(0.4rem) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes admin-row-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes admin-indicator-enter {
+    from { opacity: 0; transform: scaleX(0.15); }
+    to { opacity: 1; transform: scaleX(1); }
+  }
+  @keyframes admin-dialog-exit {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(0.3rem) scale(0.985); }
+  }
+  @keyframes public-hero-enter {
+    from { opacity: 0; transform: translateY(0.6rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes public-hero-image-enter {
+    from { opacity: 0.6; transform: scale(1.025); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes ad-appear {
+    from { opacity: 0; transform: translateY(0.4rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes skeleton-enter {
+    from { opacity: 0.65; }
+    to { opacity: 1; }
+  }
+  @keyframes admin-backdrop-exit {
+    from { background-color: rgb(8 35 27 / 45%); }
+    to { background-color: transparent; }
+  }
+  .admin-metric-card { animation: admin-card-enter 360ms both; }
   .admin-metric-value { animation: admin-count-change 280ms ease-out; }
+  .admin-content { animation: admin-page-enter 260ms ease-out both; }
+  .admin-content ul.divide-y > li { animation: admin-row-enter 180ms ease-out both; }
+  .admin-form-panel { animation: admin-page-enter 160ms ease-out both; }
+  dialog[open] { animation: admin-dialog-enter 180ms ease-out both; }
+  dialog::backdrop { animation: admin-page-enter 160ms ease-out both; }
+  dialog[open].dialog-closing { animation: admin-dialog-exit 150ms ease-in both; }
+  dialog[open].dialog-closing::backdrop { animation: admin-backdrop-exit 150ms ease-in both; }
+  .admin-active-indicator { animation: admin-indicator-enter 180ms ease-out both; }
+  .public-hero-copy { animation: public-hero-enter 440ms ease-out both; }
+  .public-hero-media { animation: public-hero-image-enter 560ms ease-out both; }
+  .ad-slot-enter { animation: ad-appear 280ms ease-out both; }
+  .skeleton-enter { animation: skeleton-enter 180ms ease-out both; }
+  .motion-reveal { opacity: 1; transform: none; transition: opacity 380ms ease-out, transform 380ms ease-out; }
+  .motion-reveal.motion-reveal-ready { opacity: 0; transform: translateY(0.7rem); }
+  .motion-reveal.motion-reveal-ready.motion-reveal-visible { opacity: 1; transform: translateY(0); }
   .network-progress { animation: network-progress 1.6s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    .motion-reveal.motion-reveal-ready { opacity: 1 !important; transform: none !important; }
   }
 }

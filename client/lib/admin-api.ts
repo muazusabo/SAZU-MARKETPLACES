@@ -46,9 +46,24 @@ export interface AdminCategory {
 }
 export interface AdminSetting { key: string; type: 'boolean' | 'int' | 'text' | 'image' | 'imageTypes'; group: string; label: string; min?: number; max?: number; maxLength?: number; value: unknown; updatedAt: string | null }
 export interface AuditEntry { id: string; action: string; resourceType: string | null; resourceId: string | null; metadata: Record<string, unknown>; actor: string | null; createdAt: string }
+export interface AdminAdvertisement {
+  id: string; title: string; advertiserName: string; description: string; imageUrl: string | null; destinationUrl: string;
+  placement: 'home_banner' | 'sponsored_product' | 'browse_banner' | 'category_banner'; categoryId: string | null; categorySlug: string | null;
+  startAt: string; endAt: string; status: 'draft' | 'scheduled' | 'active' | 'paused' | 'expired'; published: boolean;
+  impressions: number; clicks: number; clickThroughRate: number; createdAt: string; updatedAt: string;
+}
+export interface AdminAdvertisementResponse {
+  totals: { total: number; active: number; scheduled: number; expired: number; paused: number; impressions: number; clicks: number; clickThroughRate: number };
+  advertisements: AdminAdvertisement[];
+}
 
 export const adminApi = {
   overview: () => authedFetch<Overview>('/admin/overview'),
+  advertisements: () => authedFetch<AdminAdvertisementResponse>('/admin/advertisements'),
+  createAdvertisement: (form: FormData) => authedFetch<AdminAdvertisement>('/admin/advertisements', { method: 'POST', body: form }),
+  updateAdvertisement: (id: string, form: FormData) => authedFetch<AdminAdvertisement>(`/admin/advertisements/${id}`, { method: 'PATCH', body: form }),
+  setAdvertisementStatus: (id: string, status: 'published' | 'paused') => authedFetch<AdminAdvertisement>(`/admin/advertisements/${id}/status`, jsonBody('PATCH', { status })),
+  deleteAdvertisement: (id: string) => authedFetch<void>(`/admin/advertisements/${id}`, jsonBody('DELETE')),
   applications: (status: string, page: number) => authedFetch<Paged<AdminSeller>>(`/admin/sellers/applications${qs({ status, page, pageSize: 10 })}`),
   reviewSeller: (id: string, decision: string, note?: string) => authedFetch<{ status: string }>(`/admin/sellers/${id}/review`, jsonBody('PATCH', { decision, note })),
   setVerified: (id: string, verified: boolean) => authedFetch<{ verified: boolean }>(`/admin/sellers/${id}/verified`, jsonBody('PATCH', { verified })),

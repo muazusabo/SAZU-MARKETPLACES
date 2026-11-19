@@ -4,6 +4,8 @@ import { ErrorState } from '@/components/marketplace/states';
 import { Button } from '@/components/ui/button';
 import { fetchProducts, type ProductCardData } from '@/lib/marketplace';
 import { HomeProductCard } from './home-product-card';
+import { AdSlot } from '@/components/advertisements/ad-slot';
+import { ScrollReveal } from '@/components/marketplace/scroll-reveal';
 
 function SellerPromo() {
   return (
@@ -41,7 +43,7 @@ export async function HomeListings() {
   }
 
   return (
-    <section aria-labelledby="deals-heading" className="container mt-7 sm:mt-9">
+    <ScrollReveal className="container mt-7 sm:mt-9"><section aria-labelledby="deals-heading">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">Fresh finds from campus</p>
@@ -51,6 +53,7 @@ export async function HomeListings() {
           View all products <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
+      <AdSlot placement="sponsored_product" className="mt-4" />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_290px] xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           {failure ? (
@@ -77,6 +80,6 @@ export async function HomeListings() {
         </div>
         <SellerPromo />
       </div>
-    </section>
+    </section></ScrollReveal>
   );
 }

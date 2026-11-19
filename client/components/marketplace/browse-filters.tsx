@@ -61,7 +61,7 @@ export function BrowseFilters({ initial, categories }: { initial: BrowseParams; 
         <SlidersHorizontal />Filters{hasActiveFilters({ ...initial, q: undefined }) ? ' (active)' : ''}
       </Button>
 
-      <div id="filter-panel" className={cn('grid gap-4', open ? 'grid' : 'hidden', 'lg:grid')} aria-busy={pending}>
+      <div id="filter-panel" className={cn('grid gap-4 overflow-hidden transition-[max-height,opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none lg:pointer-events-auto lg:visible lg:max-h-none lg:translate-y-0 lg:overflow-visible lg:opacity-100', open ? 'pointer-events-auto visible max-h-[48rem] translate-y-0 opacity-100' : 'pointer-events-none invisible max-h-0 -translate-y-1 opacity-0 lg:max-h-none', pending && 'opacity-60')} aria-busy={pending}>
         <div className="grid gap-1.5">
           <Label htmlFor="f-category">Category</Label>
           <select id="f-category" className={selectClass} value={initial.category ?? ''} onChange={(e) => apply({ category: e.target.value || undefined })}>

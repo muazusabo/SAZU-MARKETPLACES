@@ -9,6 +9,8 @@ import { GridSkeleton } from '@/components/marketplace/product-grid';
 import { fetchFreshPublicContent, PublicContent } from '@/lib/content';
 import { fetchCategories } from '@/lib/marketplace';
 import { CATEGORIES } from '@/lib/site';
+import { AdSlot } from '@/components/advertisements/ad-slot';
+import { ScrollReveal } from '@/components/marketplace/scroll-reveal';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,8 +57,8 @@ export default async function HomePage() {
   return (
     <div className="pb-12">
       <section className="container pt-5 sm:pt-7">
-        <div className="grid overflow-hidden rounded-3xl border border-border bg-brand-cream lg:min-h-[380px] lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="flex flex-col justify-center px-5 py-8 sm:px-9 sm:py-10 lg:px-11">
+        <div className="public-hero grid overflow-hidden rounded-3xl border border-border bg-brand-cream lg:min-h-[380px] lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="public-hero-copy flex flex-col justify-center px-5 py-8 sm:px-9 sm:py-10 lg:px-11">
             <p className="w-fit rounded-full bg-brand-light-lime px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-deep">
               SAZU campus marketplace
             </p>
@@ -82,7 +84,7 @@ export default async function HomePage() {
               No online payments. Buyers and sellers arrange payment and collection directly.
             </p>
           </div>
-          <div className="relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:m-3 lg:ml-0 lg:rounded-2xl">
+          <div className="public-hero-media relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:m-3 lg:ml-0 lg:rounded-2xl">
             <Image
               src={content.homepage_hero_image_url || '/campus-scene.svg'}
               alt="Illustration of a student with books in front of a university campus"
@@ -102,7 +104,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section aria-labelledby="categories-heading" className="container mt-7 sm:mt-9">
+      <AdSlot placement="home_banner" className="container mt-5 sm:mt-7" />
+
+      <ScrollReveal className="container mt-7 sm:mt-9"><section aria-labelledby="categories-heading">
         <div className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -120,9 +124,9 @@ export default async function HomePage() {
               <li key={slug} className="w-[132px] shrink-0 snap-start sm:w-auto">
                 <Link
                   href={`/browse?category=${slug}`}
-                  className="group flex h-[112px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-2 text-center transition-colors hover:border-primary/30 hover:bg-brand-light-lime/60 focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group flex h-[112px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-brand-cream/70 px-2 text-center transition-[transform,border-color,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-brand-light-lime/60 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
                 >
-                  <span className={`grid size-11 place-items-center rounded-xl ${index % 2 === 0 ? 'bg-brand-light-lime' : 'bg-white'} text-brand-deep transition-transform group-hover:-translate-y-0.5`}>
+                  <span className={`grid size-11 place-items-center rounded-xl ${index % 2 === 0 ? 'bg-brand-light-lime' : 'bg-white'} text-brand-deep transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none`}>
                     <Icon aria-hidden className="size-6" />
                   </span>
                   <span className="line-clamp-2 text-xs font-bold leading-tight text-foreground sm:text-[11px] xl:text-xs">{name}</span>
@@ -131,13 +135,13 @@ export default async function HomePage() {
             ))}
           </ul>
         </div>
-      </section>
+      </section></ScrollReveal>
 
       <Suspense fallback={<div className="container mt-8"><GridSkeleton count={4} /></div>}>
         <HomeListings />
       </Suspense>
 
-      <section aria-labelledby="how-heading" className="container mt-7 sm:mt-9">
+      <ScrollReveal className="container mt-7 sm:mt-9"><section aria-labelledby="how-heading">
         <div className="rounded-3xl border border-brand-light-lime bg-brand-cream px-5 py-5 sm:px-7">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
             <div>
@@ -161,7 +165,7 @@ export default async function HomePage() {
             ))}
           </ol>
         </div>
-      </section>
+      </section></ScrollReveal>
     </div>
   );
 }
