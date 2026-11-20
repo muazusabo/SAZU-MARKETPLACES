@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowRight, BookOpen, Handshake, MessageCircle, Search } from 'lucide-react';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
+import { HeroImage } from '@/components/home/hero-image';
 import { HomeListings } from '@/components/home/home-listings';
 import { SearchForm } from '@/components/home/search-form';
 import { GridSkeleton } from '@/components/marketplace/product-grid';
@@ -85,15 +85,9 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="public-hero-media relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:m-3 lg:ml-0 lg:rounded-2xl">
-            <Image
-              src={content.homepage_hero_image_url || '/campus-scene.svg'}
-              alt="Illustration of a student with books in front of a university campus"
-              fill
-              priority
-              unoptimized
-              sizes="(max-width: 1023px) 100vw, 55vw"
-              className="object-cover"
-              style={{ objectPosition: HERO_IMAGE_POSITIONS[content.homepage_hero_image_position ?? 'center'] ?? 'center' }}
+            <HeroImage
+              src={content.homepage_hero_image_url}
+              objectPosition={HERO_IMAGE_POSITIONS[content.homepage_hero_image_position ?? 'center'] ?? 'center'}
             />
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-brand-deep/55 via-transparent to-transparent" />
             <div className="absolute bottom-4 left-4 rounded-2xl border border-white/60 bg-white/95 px-4 py-3 shadow-lg sm:bottom-6 sm:left-6">

@@ -9,13 +9,13 @@ import { AvailabilityBadge } from './availability-badge';
 import { ProductImage } from './product-image';
 
 /** The whole card is clickable: the title link stretches over it. */
-export function ProductCard({ product: p, headingLevel = 3 }: { product: ProductCardData; headingLevel?: 2 | 3 }) {
+export function ProductCard({ product: p, headingLevel = 3, priority = false }: { product: ProductCardData; headingLevel?: 2 | 3; priority?: boolean }) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const muted = p.availability === 'sold' || p.availability === 'unavailable';
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-[transform,border-color,box-shadow] duration-200 focus-within:ring-2 focus-within:ring-ring hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/5 motion-reduce:transition-none">
       <WishlistButton productId={p.id} title={p.title} />
-      <ProductImage image={p.image} className={`aspect-[4/3] w-full ${muted ? 'opacity-60' : ''}`} />
+      <ProductImage image={p.image} priority={priority} className={`aspect-[4/3] w-full ${muted ? 'opacity-60' : ''}`} />
       <div className="flex flex-1 flex-col gap-2.5 p-3.5 sm:p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{p.category.name}</p>
         <Heading className="font-display text-base font-bold leading-snug">

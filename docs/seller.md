@@ -30,6 +30,8 @@ Accepted: JPEG, PNG, WebP. The file type is decided from the file's **bytes**, n
 ## Storage
 `STORAGE_DRIVER=local` stores under `STORAGE_LOCAL_DIR` (`public/` is served at `/files`, `private/` is never served). `STORAGE_DRIVER=s3` uses any S3-compatible storage (AWS S3, Cloudflare R2, MinIO); configure both `S3_BUCKET_PUBLIC` and `S3_BUCKET_PRIVATE`, plus `PUBLIC_FILES_BASE_URL` for the public/CDN URL. Chat attachments are stored in the private bucket and served only after participant authorization. `STORAGE_DRIVER=cloudinary` stores new public images in Cloudinary; set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in the server environment. Do not commit credentials.
 
+Local storage is not durable on an ephemeral deployment filesystem. On Render, attach a persistent disk and set `STORAGE_LOCAL_DIR` to its mount path, or use S3/Cloudinary for production. Changing storage providers does not copy existing images; migrate the existing files and keep their database keys valid, or re-upload images whose files are already missing.
+
 On a Cloudinary cutover, `STORAGE_LEGACY_DRIVER` defaults to `local` and serves/deletes existing untagged image keys from that provider. Set it to `s3` if existing image keys are in S3, and keep the associated S3 environment variables configured. Private files continue using the legacy driver and are never uploaded to Cloudinary. New Cloudinary keys are tagged in the database, so their URLs and deletion remain provider-aware. **The S3 and Cloudinary drivers are unit-tested without live provider credentials; verify each in staging before relying on it.**
 
 ## Settings (runtime, `platform_settings`)

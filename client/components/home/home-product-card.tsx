@@ -8,11 +8,11 @@ import { CONDITION_LABELS } from '@/lib/labels';
 import type { ProductCardData } from '@/lib/marketplace';
 import { ProductImage } from '@/components/marketplace/product-image';
 
-export function HomeProductCard({ product }: { product: ProductCardData }) {
+export function HomeProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
   return (
     <article className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none">
       <div className="relative">
-        <ProductImage image={product.image} className="aspect-[4/3] w-full" />
+        <ProductImage image={product.image} priority={priority} className="aspect-[4/3] w-full" />
         <WishlistButton productId={product.id} title={product.title} />
       </div>
       <div className="flex flex-1 flex-col p-3 sm:p-3.5">

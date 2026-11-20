@@ -6,7 +6,7 @@ import { ProductCard } from './product-card';
 export function ProductGrid({ products, headingLevel = 3 }: { products: ProductCardData[]; headingLevel?: 2 | 3 }) {
   return (
     <ul className="grid grid-cols-2 gap-3 min-[480px]:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((p) => <li key={p.slug} className="contents"><ProductCard product={p} headingLevel={headingLevel} /></li>)}
+      {products.map((p, index) => <li key={p.slug} className="contents"><ProductCard product={p} headingLevel={headingLevel} priority={index < 2} /></li>)}
     </ul>
   );
 }

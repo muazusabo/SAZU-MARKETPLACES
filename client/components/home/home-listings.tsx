@@ -60,9 +60,9 @@ export async function HomeListings() {
             <ErrorState message="We couldn’t load listings right now." error={failure} />
           ) : products.length ? (
             <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <li key={product.id} className="min-w-0">
-                  <HomeProductCard product={product} />
+                  <HomeProductCard product={product} priority={index < 2} />
                 </li>
               ))}
             </ul>
